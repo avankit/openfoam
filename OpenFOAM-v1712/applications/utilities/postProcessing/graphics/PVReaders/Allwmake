@@ -1,0 +1,49 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # Run from this directory
+
+# Optional unit: continue-on-error
+export WM_CONTINUE_ON_ERROR=true
+
+# Parse arguments for library compilation
+. $WM_PROJECT_DIR/wmake/scripts/AllwmakeParseArguments
+
+# Source CMake functions
+. $WM_PROJECT_DIR/wmake/scripts/cmakeFunctions
+
+# -----------------------------------------------------------------------------
+
+warnIncomplete()
+{
+    echo
+    echo "    WARNING: incomplete build of ParaView plugin: $@"
+    echo
+}
+
+# major version as per paraview include directory:
+# Eg, "PREFIX/include/paraview-5.0" -> "5.0"
+major="${ParaView_INCLUDE_DIR##*-}"
+
+case "$major" in
+[45].[0-9]*)
+    if canBuildPlugin
+    then
+    (
+        wmakeLibPv foamPv
+        wmakeLibPv vtkPVblockMesh
+        wmakeLibPv vtkPVFoam
+
+        if [ "$targetType" != objects ]
+        then
+            cmakePv $PWD/PVblockMeshReader || warnIncomplete "BlockMesh"
+            cmakePv $PWD/PVFoamReader || warnIncomplete "OpenFOAM"
+        fi
+    )
+    fi
+    ;;
+*)
+    echo "==> skip build of ParaView plugins"
+    echo "    include directory was for paraview major version '${major:-none}'"
+    ;;
+esac
+
+#------------------------------------------------------------------------------

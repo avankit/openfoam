@@ -1,0 +1,164 @@
+#!/bin/sh
+#------------------------------------------------------------------------------
+# =========                 |
+# \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+#  \\    /   O peration     |
+#   \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+#    \\/     M anipulation  | Copyright (C) 2017 OpenCFD Ltd.
+#-------------------------------------------------------------------------------
+# License
+#     This file is part of OpenFOAM, licensed under GNU General Public License
+#     <http://www.gnu.org/licenses/>.
+#
+# Script
+#     foamCleanPath
+#
+# Description
+#     Usage: foamCleanPath [OPTION] path [wildcard] .. [wildcard]
+#
+#     Prints its argument (which should be a ':' separated path)
+#     without the following:
+#         - duplicate elements
+#         - elements whose start matches a wildcard
+#         - inaccessible directories (with the -strip option)
+#
+# Note
+#     - this routine will fail when directories have embedded spaces
+#     - false matches possible if a wildcard contains '.' (sed regex)
+#     - the wildcards themselves can be written together and separated
+#       by colons or whitespace
+#------------------------------------------------------------------------------
+usage() {
+    cat <<USAGE 1>&2
+Usage: ${0##*/} [OPTION] path [wildcard1] .. [wildcardN]
+options:
+  -debug            print debug information to stderr
+  -strip            remove inaccessible directories
+  -verbose          report some progress (input, output, ...)
+  -help             print the usage
+
+Prints its argument (which should be a ':' separated list) cleansed from
+  - duplicate elements
+  - elements whose start matches one of the wildcard(s)
+  - inaccessible directories (with the -strip option)
+
+Exit status
+    0  on success
+    1  for miscellaneous errors.
+    2  initial value of 'path' is empty
+
+USAGE
+    exit 1
+}
+
+
+# Parse options
+unset optDebug optStrip optVerbose
+while [ "$#" -gt 0 ]
+do
+    case "$1" in
+    -h | -help*)
+        usage
+        ;;
+    -debug)
+        optDebug=true
+        ;;
+    -strip)
+        optStrip=true
+        ;;
+    -verbose)
+        optVerbose=true
+        ;;
+    *)
+        break
+        ;;
+    esac
+    shift
+done
+
+# Basic checks, setup
+[ "$#" -ge 1 ] || usage
+
+dirList="$1"
+shift
+
+[ -n "$dirList" ] || exit 2     # Quick exit on empty 'dirList'
+
+#-------------------------------------------------------------------------------
+
+# Debugging (optional)
+if [ -n "$optDebug" ]
+then
+    printDebug() { while [ "$#" -ge 1 ]; do echo "$1" 1>&2; shift; done; }
+else
+    printDebug() { true; }      # No-op
+fi
+
+# Check directory existence (optional)
+if [ -n "$optStrip" ]
+then
+    isDir() { test -d "$1"; }   # Check for directory
+else
+    isDir() { true; }           # No check (always true)
+fi
+
+# The "wildcard1 ... wildcardN" may have been passed as a single parameter
+# or may contain ':' separators
+
+oldIFS="$IFS"   # Preserve initial IFS
+IFS=': '        # Split on colon, whitespace
+set -- $*
+
+if [ -n "$optVerbose" ]
+then
+    echo "clean: $dirList" 1>&2
+    echo "with:  $@" 1>&2
+fi
+
+printDebug "input>$dirList<"
+
+# Strip out wildcards via sed. Path and wildcard cannot contain '?'.
+for wildcard
+do
+    if [ -n "$wildcard" ]
+    then
+        printDebug "remove>$wildcard<"
+        dirList=$(echo "$dirList:" | sed -e "s?${wildcard}[^:]*:??g")
+    fi
+done
+printDebug "intermediate>$dirList<"
+
+IFS=': '        # Split on colon, whitespace (to avoid surprises)
+set -- $dirList
+
+IFS="$oldIFS"   # Restore initial IFS
+
+# Rebuild the list
+unset dirList
+for dir
+do
+    printDebug "check>$dir< in $dirList"
+    if isDir "$dir"
+    then
+        # Detect duplicates (ie, dir already in the list)
+        duplicate=$(echo ":$dirList:" | sed -ne '\?:'"$dir"':?p')
+
+        if [ -n "$duplicate" ]
+        then
+            printDebug "duplicate>$dir<"
+        else
+            dirList="${dirList}${dirList:+:}$dir"
+        fi
+    fi
+done
+
+printDebug "output>$dirList<"
+
+if [ -n "$optVerbose" ]
+then
+    echo "output: $dirList" 1>&2
+fi
+
+echo "$dirList"
+
+#------------------------------------------------------------------------------

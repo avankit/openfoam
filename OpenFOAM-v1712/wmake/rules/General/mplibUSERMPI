@@ -1,0 +1,5 @@
+# User MPI - using Charm/AMPI
+
+
+PINC   	= -I/ui/cwi/averma5/charm/verbs-linux-x86_64-shared-libraries/include
+PLIBS  	= -Wl,-rpath-link,/ui/cwi/averma5/charm/verbs-linux-x86_64-shared-libraries/lib_so

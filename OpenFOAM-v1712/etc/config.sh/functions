@@ -1,0 +1,99 @@
+#----------------------------------*-sh-*--------------------------------------
+# =========                 |
+# \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+#  \\    /   O peration     |
+#   \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+#    \\/     M anipulation  | Copyright (C) 2017 OpenCFD Ltd.
+#------------------------------------------------------------------------------
+# License
+#     This file is part of OpenFOAM, licensed under GNU General Public License
+#     <http://www.gnu.org/licenses/>.
+#
+# File
+#     etc/config.sh/functions
+#
+# Description
+#     Initialization script functions for the bashrc environment
+#     Sourced from OpenFOAM-<VERSION>/etc/config.sh/bashrc
+#
+#------------------------------------------------------------------------------
+
+if [ -z "$WM_SHELL_FUNCTIONS" ]
+then
+    # Not previously loaded/defined - define now
+
+    # Temporary environment variable to track loading/unloading of functions
+    WM_SHELL_FUNCTIONS=loaded
+
+    # Prefix to PATH
+    _foamAddPath()
+    {
+        [ $# -gt 0 ] && export PATH=$1:$PATH
+    }
+
+    # Prefix to LD_LIBRARY_PATH
+    _foamAddLib()
+    {
+        [ $# -gt 0 ] && export LD_LIBRARY_PATH=$1:$LD_LIBRARY_PATH
+    }
+
+    # Prefix to MANPATH
+    _foamAddMan()
+    {
+        [ $# -gt 0 ] && export MANPATH=$1:$MANPATH
+    }
+
+    # Source an etc file, possibly with some verbosity
+    # - use eval to avoid intermediate variables (ksh doesn't have 'local')
+    if [ "$FOAM_VERBOSE" -a "$PS1" ]
+    then
+        _foamEtc(){ eval "$($WM_PROJECT_DIR/bin/foamEtcFile -sh-verbose $@)"; }
+    else
+        _foamEtc(){ eval "$($WM_PROJECT_DIR/bin/foamEtcFile -sh $@)"; }
+    fi
+
+    # Evaluate command-line parameters
+    _foamEval()
+    {
+        while [ $# -gt 0 ]
+        do
+            case "$1" in
+            -*)
+                # Stray option (not meant for us here) -> get out
+                break
+                ;;
+            *=)
+                # name=       -> unset name
+                [ "$FOAM_VERBOSE" -a "$PS1" ] && echo "unset ${1%=}" 1>&2
+                eval "unset ${1%=}"
+                ;;
+            *=*)
+                # name=value  -> export name=value
+                [ "$FOAM_VERBOSE" -a "$PS1" ] && echo "export $1" 1>&2
+                eval "export $1"
+                ;;
+            *)
+                # Filename: source it
+                if [ -f "$1" ]
+                then
+                    [ "$FOAM_VERBOSE" -a "$PS1" ] && echo "Using: $1" 1>&2
+                    . "$1"
+                else
+                    _foamEtc -silent "$1"
+                fi
+                ;;
+            esac
+            shift
+        done
+    }
+
+else
+    # Was previously loaded/defined - now unset
+
+    unset -f _foamAddPath _foamAddLib _foamAddMan 2>/dev/null
+    unset -f _foamEtc _foamEval 2>/dev/null
+    unset WM_SHELL_FUNCTIONS
+
+fi
+
+#------------------------------------------------------------------------------

@@ -1,0 +1,32 @@
+#----------------------------------*-sh-*--------------------------------------
+# =========                 |
+# \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+#  \\    /   O peration     |
+#   \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+#    \\/     M anipulation  |
+#------------------------------------------------------------------------------
+# License
+#     This file is part of OpenFOAM, licensed under GNU General Public License
+#     <http://www.gnu.org/licenses/>.
+#
+# File
+#     config.sh/example/paraview
+#
+# Description
+#     Example of chaining to the standard config.sh/paraview with a
+#     different ParaView_VERSION
+#
+# Note
+#     This file could be copied to a user or site location, but should never
+#     replace the default shipped version as this will cause an infinite loop.
+#
+#------------------------------------------------------------------------------
+
+# Use shipped paraview config file (-mode=o) with a different ParaView_VERSION
+
+foamFile=$($WM_PROJECT_DIR/bin/foamEtcFile -mode=o config.sh/paraview 2>/dev/null)
+[ $? -eq 0 ] && . $foamFile ParaView_VERSION=5.4.0
+
+unset foamFile
+
+#------------------------------------------------------------------------------

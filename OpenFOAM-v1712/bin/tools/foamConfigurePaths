@@ -1,0 +1,505 @@
+#!/bin/sh
+#------------------------------------------------------------------------------
+# =========                 |
+# \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+#  \\    /   O peration     |
+#   \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+#    \\/     M anipulation  | Copyright (C) 2016-2017 OpenCFD Ltd.
+#------------------------------------------------------------------------------
+# License
+#     This file is part of OpenFOAM, licensed under GNU General Public License
+#     <http://www.gnu.org/licenses/>.
+#
+# Script
+#     foamConfigurePaths
+#
+# Description
+#     Adjust hardcoded installation versions and paths in bashrc and config.sh/
+#
+#------------------------------------------------------------------------------
+usage() {
+    exec 1>&2
+    while [ "$#" -ge 1 ]; do echo "$1"; shift; done
+    cat<<USAGE
+
+usage: ${0##*/}
+  -foamInstall DIR        specify installation directory (eg, /opt)
+  -foamVersion VER        specify project version (eg, 1612)
+  -projectName NAME       specify project directory name (eg, openfoam1612)
+  -archOption 32|64       specify 'WM_ARCH_OPTION' architecture option
+  -SP | -float32          specify 'WM_PRECISION_OPTION'
+  -DP | -float64          specify 'WM_PRECISION_OPTION'
+  -int32 | -int64         specify 'WM_LABEL_SIZE'
+  -system NAME            specify 'system' compiler to use (eg, Gcc, Icc,...)
+  -third  NAME            specify 'ThirdParty' compiler to use (eg, Clang40,...)
+  -boost VER              specify 'boost_version'
+  -boost-path DIR         specify 'BOOST_ARCH_PATH'
+  -cgal ver               specify 'cgal_version'
+  -cgal-path DIR          specify 'CGAL_ARCH_PATH'
+  -clang VER              specify 'clang_version' for ThirdParty Clang
+  -cmake VER              specify 'cmake_version'
+  -fftw VER               specify 'fffw_version'
+  -fftw-path DIR          specify 'FFTW_ARCH_PATH'
+  -kahip VER              specify 'KAHIP_VERSION'
+  -kahip-path DIR         specify 'KAHIP_ARCH_PATH'
+  -metis ver              specify 'METIS_VERSION'
+  -metis-path DIR         specify 'METIS_ARCH_PATH'
+  -paraview VER           specify 'ParaView_VERSION' (eg, 5.4.1)
+  -paraview-path DIR      specify 'ParaView_DIR' (eg, /opt/ParaView-5.4.1)
+  -mpi NAME               specify 'WM_MPLIB' type (eg, FJMPI, INTELMPI, etc)
+  -openmpi VER            specify ThirdParty openmpi version for 'FOAM_MPI'
+  -openmpi-system         activate system openmpi
+  -openmpi-third          activate ThirdParty openmpi (using default version)
+  -scotch VER             specify 'SCOTCH_VERSION' (eg, scotch_6.0.4)
+  -scotch-path DIR        specify 'SCOTCH_ARCH_PATH' (eg, /opt/OpenFOAM-scotch_6.0.4)
+  -vtk  VER               specify 'vtk_version' (eg, VTK-7.1.0)
+  -mesa VER               specify 'mesa_version' (eg, mesa-13.0.1)
+  -sigfpe | -no-sigfpe    [defunct - now under etc/controlDict]
+  gmp-VERSION             for ThirdParty gcc (gmp-system for system library)
+  mpfr-VERSION            for ThirdParty gcc (mpfr-system for system library)
+  mpc-VERSION             for ThirdParty gcc (mpc-system for system library)
+
+* Adjust hardcoded versions and installation paths (for bash, POSIX shell).
+
+Equivalent options:
+  -foamInstall          --foamInstall
+  -foamVersion          --projectVersion
+  -projectName          --projectName
+  -archOption           --archOption
+  -third                -ThirdParty
+  -paraview             --paraviewVersion | -paraviewVersion
+  -paraview-path        --paraviewInstall | -paraviewInstall
+  -scotch               --scotchVersion | -scotchVersion
+  -scotch-path          --scotchArchPath | -scotchArchPath
+
+USAGE
+    exit 1
+}
+
+# Check that it appears to be an OpenFOAM installation
+[ -f etc/bashrc -a -d etc/config.sh ] || \
+    usage "Please run from top-level directory of installation"
+
+
+# Report error and exit
+die()
+{
+    exec 1>&2
+    echo
+    echo "Error encountered:"
+    while [ "$#" -ge 1 ]; do echo "    $1"; shift; done
+    echo
+    echo "See '${0##*/} -help' for usage"
+    echo
+    exit 1
+}
+
+
+# Check if argument matches the expected input. Respects case.
+# Uses sed for consistency with the replacement routines.
+#
+# _matches <arg> <matcher> [... <matcherN>]
+#
+_matches()
+{
+    local input="$1"
+    shift
+    local result
+    for regexp
+    do
+        result=$(echo "$input" | sed -n -e "/^$regexp"'$/p')
+        test -n "$result" && return 0  # successful match
+    done
+    return 1
+}
+
+
+# Function to do replacement on file. Checks if any replacement has been done.
+# _inlineSed <file> <regexp> <replacement> <msg>
+_inlineSed()
+{
+    local file="$1"
+    local regexp="$2"
+    local replacement="$3"
+    local msg="$4"
+    local cmd='/^[^#]/s@'"$regexp"'@'"$replacement"'@'
+
+    [ -f "$file" ] || {
+        echo "Missing file: $file"
+        exit 2 # Fatal
+    }
+
+    grep -q "$regexp" "$file" && sed -i -e "$cmd" "$file" || { \
+        echo "Failed: ${msg:-replacement} in $file"
+        return 1
+    }
+
+    [ -n "$msg" ] && echo "    $msg  ($file)"
+
+    return 0
+}
+
+
+# Standard <key> <val> type of replacements.
+# replace <file> <key1> <val1> .. <keyN> <valN>
+# looks for KEYWORD=.*
+replace()
+{
+    local file="$1"
+    shift
+
+    local key val
+
+    while [ "$#" -ge 2 ]
+    do
+        key=$1
+        val=$2
+        shift 2
+
+        _inlineSed \
+            $file  \
+            "$key=.*" \
+            "$key=$val" \
+            "Replaced $key setting by '$val'"
+    done
+}
+
+#------------------------------------------------------------------------------
+
+unset adjusted optMpi
+# Parse options
+while [ "$#" -gt 0 ]
+do
+    case "$1" in
+    -h | -help* | --help*)
+        usage
+        ;;
+    '')
+        # Discard empty arguments
+        ;;
+
+    -foamInstall | --foamInstall)
+        # Replace FOAM_INST_DIR=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        foamInstDir="$2"
+        _inlineSed \
+            etc/bashrc \
+            '\(.*BASH_SOURCE.*\)' \
+            '## \1' \
+            "Remove default FOAM_INST_DIR setting" \
+        && _inlineSed \
+            etc/bashrc \
+            '\(.* && FOAM_INST_DIR\)' \
+            '## \1'
+
+        _inlineSed \
+            etc/bashrc \
+            '^ *FOAM_INST_DIR=.*' \
+            'FOAM_INST_DIR='"$foamInstDir" \
+            "Setting FOAM_INST_DIR to '$foamInstDir'"
+
+        adjusted=true
+        shift
+        ;;
+
+   -projectName | --projectName)
+        # Replace WM_PROJECT_DIR=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        projectName="$2"
+        _inlineSed \
+            etc/bashrc \
+            'WM_PROJECT_DIR=.*' \
+            'WM_PROJECT_DIR=$WM_PROJECT_INST_DIR/'"$projectName" \
+            "Replaced WM_PROJECT_DIR setting by $projectName"
+
+        adjusted=true
+        shift
+        ;;
+
+   -foamVersion | --projectVersion)
+        # Replace WM_PROJECT_VERSION=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/bashrc  WM_PROJECT_VERSION "$2"
+        adjusted=true
+        shift
+        ;;
+
+    -archOption | --archOption)
+        # Replace WM_ARCH_OPTION=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        _matches "$2" 32 64 || die "'$1' option has bad value: '$2'"
+
+        optionValue="$2"
+        if [ "$optionValue" = "$(sed -ne '/^[^#]/s/^.* WM_ARCH_OPTION=//p' etc/bashrc)" ]
+        then
+            echo "WM_ARCH_OPTION already set to $optionValue"
+            : ${adjusted:=false}
+        else
+            replace etc/bashrc  WM_ARCH_OPTION "$optionValue"
+            adjusted=true
+        fi
+        shift
+        ;;
+
+    -SP | -float32)
+        # Replace WM_PRECISION_OPTION=...
+        replace etc/bashrc  WM_PRECISION_OPTION "SP"
+        adjusted=true
+        ;;
+
+    -DP | -float64)
+        # Replace WM_PRECISION_OPTION=...
+        replace etc/bashrc  WM_PRECISION_OPTION "DP"
+        adjusted=true
+        ;;
+
+    -int32 | -int64)
+        # Replace WM_LABEL_SIZE=...
+        optionValue="${1#-int}"
+        replace etc/bashrc  WM_LABEL_SIZE "$optionValue"
+        adjusted=true
+        ;;
+
+    -system)
+        # Replace WM_COMPILER_TYPE=... and WM_COMPILER=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/bashrc  WM_COMPILER_TYPE system  WM_COMPILER "$2"
+        adjusted=true
+        shift
+        ;;
+
+    -third | -ThirdParty)
+        # Replace WM_COMPILER_TYPE=... and WM_COMPILER=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/bashrc  WM_COMPILER_TYPE ThirdParty  WM_COMPILER "$2"
+        adjusted=true
+        shift
+        ;;
+
+    -boost)
+        # Replace boost_version=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/config.sh/CGAL  boost_version "$2"
+        adjusted=true
+        shift
+        ;;
+
+    -boost-path)
+        # Replace BOOST_ARCH_PATH=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/config.sh/CGAL  BOOST_ARCH_PATH "$2"
+        adjusted=true
+        shift
+        ;;
+
+    -cgal)
+        # Replace cgal_version=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/config.sh/CGAL  cgal_version "$2"
+        adjusted=true
+        shift
+        ;;
+
+    -cgal-path)
+        # Replace CGAL_ARCH_PATH=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/config.sh/CGAL  CGAL_ARCH_PATH "$2"
+        adjusted=true
+        shift
+        ;;
+
+    -fftw)
+        # Replace fftw_version=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/config.sh/FFTW  fftw_version "$2"
+        adjusted=true
+        shift
+        ;;
+
+    -fftw-path)
+        # Replace FFTW_ARCH_PATH=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/config.sh/FFTW  FFTW_ARCH_PATH "$2"
+        adjusted=true
+        shift
+        ;;
+
+    -clang)
+        # Replace clang_version=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/config.sh/compiler  clang_version "$2"
+        adjusted=true
+        shift
+        ;;
+
+    -cmake)
+        # Replace cmake_version=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/config.sh/paraview  cmake_version "$2"
+        adjusted=true
+        shift
+        ;;
+
+    -mpi)
+        # Explicitly set WM_MPLIB=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/bashrc  WM_MPLIB "$2"
+        optMpi=system
+        adjusted=true
+        shift
+        ;;
+
+    -openmpi)
+        # Replace FOAM_MPI=openmpi-<digits>.. and set to use third-party
+        #  The edit is slightly fragile, but works
+        expected="openmpi-[1-9][.0-9]*"
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        optMpi="$2"
+        _matches "$optMpi" "$expected" || die "'$1' option has bad value: '$optMpi'"
+
+        _inlineSed etc/config.sh/mpi \
+            "FOAM_MPI=$expected" \
+            "FOAM_MPI=$optMpi" \
+            "Replaced 'FOAM_MPI=$expected' setting by 'FOAM_MPI=$optMpi'"
+
+        replace etc/bashrc  WM_MPLIB OPENMPI
+        adjusted=true
+        shift
+        ;;
+
+    -openmpi-system)
+        # Explicitly set WM_MPLIB=SYSTEMOPENMPI
+        replace etc/bashrc  WM_MPLIB SYSTEMOPENMPI
+        optMpi=system
+        adjusted=true
+        ;;
+
+    -openmpi-third)
+        # Explicitly set WM_MPLIB=OPENMPI, using default setting for openmpi
+        replace etc/bashrc  WM_MPLIB OPENMPI
+        optMpi=third
+        adjusted=true
+        ;;
+
+    -paraview | -paraviewVersion | --paraviewVersion)
+        # Replace ParaView_VERSION=...
+        expected="[5-9][.0-9]*"
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        _matches "$2" "$expected" || die "'$1' option has bad value: '$2'"
+
+        replace etc/config.sh/paraview  ParaView_VERSION "$2"
+        adjusted=true
+        shift
+        ;;
+
+    -paraview-path | -paraviewInstall | --paraviewInstall)
+        # Replace ParaView_DIR=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/config.sh/paraview  ParaView_DIR "$2"
+        adjusted=true
+        shift
+        ;;
+
+    -kahip)
+        # Replace KAHIP_VERSION=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/config.sh/kahip  KAHIP_VERSION "$2"
+        adjusted=true
+        shift
+        ;;
+
+    -kahip-path)
+        # Replace KAHIP_ARCH_PATH=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/config.sh/kahip  KAHIP_ARCH_PATH "$2"
+        adjusted=true
+        shift
+        ;;
+
+    -metis)
+        # Replace METIS_VERSION=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/config.sh/metis  METIS_VERSION "$2"
+        adjusted=true
+        shift
+        ;;
+
+    -metis-path)
+        # Replace METIS_ARCH_PATH=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/config.sh/metis  METIS_ARCH_PATH "$2"
+        adjusted=true
+        shift
+        ;;
+
+    -scotch | -scotchVersion | --scotchVersion)
+        # Replace SCOTCH_VERSION=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/config.sh/scotch  SCOTCH_VERSION "$2"
+        adjusted=true
+        shift
+        ;;
+
+    -scotch-path | -scotchArchPath | --scotchArchPath)
+        # Replace SCOTCH_ARCH_PATH=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/config.sh/scotch  SCOTCH_ARCH_PATH "$2"
+        adjusted=true
+        shift
+        ;;
+
+    -vtk)
+        # Replace vtk_version=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/config.sh/vtk  vtk_version "$2"
+        adjusted=true
+        shift
+        ;;
+
+    -mesa)
+        # Replace mesa_version=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/config.sh/vtk  mesa_version "$2"
+        adjusted=true
+        shift
+        ;;
+
+    gmp-[4-9]* | gmp-system)
+        # gcc-related package
+        replace etc/config.sh/compiler  gmp_version "$1"
+        adjusted=true
+        ;;
+
+    mpfr-[2-9]* | mpfr-system)
+        # gcc-related package
+        replace etc/config.sh/compiler  mpfr_version "$1"
+        adjusted=true
+        ;;
+
+    mpc-[0-9]* | mpc-system)
+        # gcc-related package
+        replace etc/config.sh/compiler  mpc_version "$1"
+        adjusted=true
+        ;;
+
+    -sigfpe | -no-sigfpe)
+        echo "Enable/disable FOAM_SIGFPE now via controlDict" 1>&2
+        ;;
+
+    *)
+        die "unknown option/argument: '$1'"
+        ;;
+    esac
+    shift
+done
+
+if [ "$adjusted" = false ]
+then
+    echo "Nothing adjusted"
+    exit 0
+elif [ -z "$adjusted" ]
+then
+    die "Please specify at least one configure option"
+fi
+
+#------------------------------------------------------------------------------

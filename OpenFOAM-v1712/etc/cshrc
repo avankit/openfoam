@@ -1,0 +1,260 @@
+#----------------------------------*-sh-*--------------------------------------
+# =========                 |
+# \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+#  \\    /   O peration     |
+#   \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+#    \\/     M anipulation  | Copyright (C) 2016-2017 OpenCFD Ltd.
+#------------------------------------------------------------------------------
+# License
+#     This file is part of OpenFOAM, licensed under GNU General Public License
+#     <http://www.gnu.org/licenses/>.
+#
+# File
+#     etc/cshrc
+#
+# Description
+#     Set OpenFOAM environment for C-shell (csh, tcsh).
+#     Source manually or from the ~/.login or ~/.cshrc files.
+#
+# Note
+#     Many environment variables can be overridden using a <prefs.csh> file
+#     from one of these locations:
+#     * user-specific:
+#         * ~/.OpenFOAM/$WM_PROJECT_VERSION
+#         * ~/.OpenFOAM
+#     * group-specific:
+#         * $WM_PROJECT_SITE/site/$WM_PROJECT_VERSION
+#         * $WM_PROJECT_SITE/site
+#     * general:
+#         * $WM_PROJECT_DIR/etc
+#
+#     Any changes made to this cshrc file may be lost with the next upgrade.
+#
+#------------------------------------------------------------------------------
+
+setenv WM_PROJECT OpenFOAM
+setenv WM_PROJECT_VERSION v1712
+
+# [FOAM_INST_DIR] - parent directory containing the OpenFOAM installation.
+# \- When this file is located as $WM_PROJECT_DIR/etc/cshrc, the next lines
+#    should work when sourced by CSH or TCSH shells. If this however fails,
+#    set one of the fallback values to an appropriate path.
+# --
+setenv FOAM_INST_DIR `lsof +p $$ |& \
+    sed -n -e 's@[^/]*@@' -e 's@/'$WM_PROJECT'[^/]*/etc/cshrc.*@@p'`
+# setenv FOAM_INST_DIR  $HOME/$WM_PROJECT
+# setenv FOAM_INST_DIR  /opt/$WM_PROJECT
+# setenv FOAM_INST_DIR  /usr/local/$WM_PROJECT
+#
+# END OF (NORMAL) USER EDITABLE PART
+################################################################################
+
+# Default environment variables.
+# Can override with a <prefs.sh> file instead of editing below.
+
+# [WM_COMPILER_TYPE] - Compiler location:
+# = system | ThirdParty
+setenv WM_COMPILER_TYPE system
+
+# [WM_COMPILER] - Compiler:
+# = Gcc | Gcc4[8-9] | Gcc5[1-5] | Gcc6[1-4] | Gcc7[1-2] | GccKNL |
+#   Clang | Clang3[8-9] | Clang[45]0 | Icc | IccKNL | Cray
+setenv WM_COMPILER Gcc
+
+# [WM_ARCH_OPTION] - Memory addressing:
+# = 32 | 64
+#   * on a 64-bit OS this can be 32 or 64
+#   * on a 32-bit OS, it is always 32-bit and this option is ignored
+setenv WM_ARCH_OPTION 64
+
+# [WM_PRECISION_OPTION] - Floating-point precision:
+# = DP | SP
+setenv WM_PRECISION_OPTION DP
+
+# [WM_LABEL_SIZE] - Label size in bits:
+# = 32 | 64
+setenv WM_LABEL_SIZE 32
+
+# [WM_COMPILE_OPTION] - Optimised, debug, profiling:
+# = Opt | Debug | Prof
+setenv WM_COMPILE_OPTION Opt
+
+# [WM_MPLIB] - MPI implementation:
+# = SYSTEMOPENMPI | OPENMPI | SYSTEMMPI | MPI | MPICH | MPICH-GM |
+#   HPMPI | CRAY-MPICH | FJMPI | QSMPI | SGIMPI | INTELMPI | USERMPI
+setenv WM_MPLIB SYSTEMOPENMPI
+
+
+# [FOAM_SIGFPE] - Trapping of floating-point exceptions.
+#               - overrides the 'trapFpe' controlDict entry
+# = true | false
+#setenv FOAM_SIGFPE true
+
+# [FOAM_SETNAN] - Memory initialisation as NaN
+#               - overrides the 'setNaN' controlDict entry
+# = true | false
+#setenv FOAM_SETNAN false
+
+# [WM_OSTYPE] - Operating System Type:
+# = POSIX
+#setenv WM_OSTYPE POSIX
+
+################################################################################
+
+# Old directories to be cleaned from PATH, LD_LIBRARY_PATH
+set foamOldDirs=
+if ( $?WM_PROJECT_DIR ) then
+   set foamOldDirs="$foamOldDirs $WM_PROJECT_DIR"
+endif
+if ( $?WM_THIRD_PARTY_DIR ) then
+   set foamOldDirs="$foamOldDirs $WM_THIRD_PARTY_DIR"
+endif
+if ( $?WM_PROJECT ) then
+   set foamOldDirs="$foamOldDirs $HOME/$WM_PROJECT/$LOGNAME"
+endif
+if ( $?FOAM_SITE_APPBIN ) then
+   set foamOldDirs="$foamOldDirs $FOAM_SITE_APPBIN"
+endif
+if ( $?FOAM_SITE_LIBBIN ) then
+   set foamOldDirs="$foamOldDirs $FOAM_SITE_LIBBIN"
+endif
+
+# Location of installation and third-party software
+setenv WM_PROJECT_INST_DIR $FOAM_INST_DIR
+setenv WM_PROJECT_DIR      $WM_PROJECT_INST_DIR/$WM_PROJECT-$WM_PROJECT_VERSION
+setenv WM_THIRD_PARTY_DIR  $WM_PROJECT_INST_DIR/ThirdParty-$WM_PROJECT_VERSION
+
+# [WM_PROJECT_SITE] - Location of site-specific (group) files
+# default (unset) implies WM_PROJECT_INST_DIR/site
+if ( $?WM_PROJECT_SITE ) then
+    set foamOldDirs="$WM_PROJECT_SITE $foamOldDirs"
+    if ( ! -d "$WM_PROJECT_SITE" ) unsetenv WM_PROJECT_SITE
+else
+    unsetenv WM_PROJECT_SITE
+endif
+
+# [WM_PROJECT_USER_DIR] - Location of user files
+setenv WM_PROJECT_USER_DIR $HOME/$WM_PROJECT/$LOGNAME-$WM_PROJECT_VERSION
+
+# Source an etc file, possibly with some verbosity
+if ($?FOAM_VERBOSE && $?prompt) then
+    alias _foamEtc 'eval `$WM_PROJECT_DIR/bin/foamEtcFile -csh-verbose \!*`'
+else
+    alias _foamEtc 'eval `$WM_PROJECT_DIR/bin/foamEtcFile -csh \!*`'
+endif
+
+# Override definitions via prefs, with 'other' first so the sys-admin
+# can provide base values independent of WM_PROJECT_SITE
+_foamEtc -mode=o  prefs.csh
+_foamEtc -mode=ug prefs.csh
+
+# Evaluate command-line parameters and record settings for later.
+# These can be used to set/unset values, specify additional files etc.
+setenv FOAM_SETTINGS "${*}"
+while ( $#argv > 0 )
+    switch ($argv[1])
+    case -*:
+        # Stray option (not meant for us here) -> get out
+        break
+        breaksw
+    case *=:
+        # name=       -> unsetenv name
+        if ($?FOAM_VERBOSE && $?prompt) echo "unsetenv $argv[1]:s/=//"
+        eval "unsetenv $argv[1]:s/=//"
+        breaksw
+    case *=*:
+        # name=value  -> setenv name value
+        if ($?FOAM_VERBOSE && $?prompt) echo "setenv $argv[1]:s/=/ /"
+        eval "setenv $argv[1]:s/=/ /"
+        breaksw
+    default:
+        # Filename: source it
+        if ( -f "$argv[1]" ) then
+            if ($?FOAM_VERBOSE && $?prompt) echo "Using: $argv[1]"
+            source "$argv[1]"
+        else
+            _foamEtc -silent "$argv[1]"
+        endif
+        breaksw
+    endsw
+    shift
+end
+
+
+# Clean standard environment variables (PATH, LD_LIBRARY_PATH, MANPATH)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+set foamClean=$WM_PROJECT_DIR/bin/foamCleanPath
+
+# Prevent local variables from shadowing setenv variables
+unset PATH MANPATH LD_LIBRARY_PATH LD_PRELOAD
+
+if (! $?LD_LIBRARY_PATH ) setenv LD_LIBRARY_PATH
+if (! $?MANPATH ) setenv MANPATH
+
+# Clean PATH (path)
+set cleaned=`$foamClean "$PATH" "$foamOldDirs"`
+if ( $status == 0 ) setenv PATH $cleaned
+
+# Clean LD_LIBRARY_PATH
+set cleaned=`$foamClean "$LD_LIBRARY_PATH" "$foamOldDirs"`
+if ( $status == 0 ) setenv LD_LIBRARY_PATH $cleaned
+
+# Clean MANPATH
+set cleaned=`$foamClean "$MANPATH" "$foamOldDirs"`
+if ( $status == 0 ) setenv MANPATH $cleaned
+
+
+# Setup for OpenFOAM compilation etc
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+_foamEtc config.csh/settings
+
+# Setup for third-party packages
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+_foamEtc config.csh/mpi
+_foamEtc config.csh/paraview
+_foamEtc config.csh/vtk
+_foamEtc config.csh/ensight
+## _foamEtc config.csh/ADIOS
+_foamEtc config.csh/CGAL
+_foamEtc config.csh/FFTW
+
+# Interactive shell
+if ($?prompt) then
+    _foamEtc config.csh/aliases
+    _foamEtc config.csh/tcsh_completion
+endif
+
+
+# Clean environment paths again. Only remove duplicates
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Clean PATH (path)
+set cleaned=`$foamClean "$PATH"`
+if ( $status == 0 ) setenv PATH $cleaned
+
+# Clean LD_LIBRARY_PATH
+set cleaned=`$foamClean "$LD_LIBRARY_PATH"`
+if ( $status == 0 ) setenv LD_LIBRARY_PATH $cleaned
+
+# Clean MANPATH (trailing ':' to find system pages)
+set cleaned=`$foamClean "$MANPATH"`
+if ( $status == 0 ) setenv MANPATH "${cleaned}:"
+
+# Clean LD_PRELOAD
+if ( $?LD_PRELOAD ) then
+    set cleaned=`$foamClean "$LD_PRELOAD"`
+    if ( $status == 0 ) setenv LD_PRELOAD $cleaned
+endif
+
+
+# Cleanup temporary information
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Unload shell "functions"
+unalias _foamEtc
+unalias _foamAddPath
+unalias _foamAddLib
+unalias _foamAddMan
+
+unset cleaned foamClean foamOldDirs
+
+#------------------------------------------------------------------------------
