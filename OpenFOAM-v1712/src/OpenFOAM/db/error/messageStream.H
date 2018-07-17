@@ -203,9 +203,9 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 // Global error declarations: defined in messageStream.C
 
-extern messageStream SeriousError;
-extern messageStream Warning;
-extern messageStream Info;
+extern thread_local messageStream SeriousError;
+extern thread_local messageStream Warning;
+extern thread_local messageStream Info;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

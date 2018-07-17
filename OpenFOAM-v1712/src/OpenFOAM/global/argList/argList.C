@@ -105,7 +105,7 @@ Foam::argList::initValidTables::initValidTables()
 }
 
 
-thread_local Foam::argList::initValidTables dummyInitValidTables;
+Foam::argList::initValidTables dummyInitValidTables;
 
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
 

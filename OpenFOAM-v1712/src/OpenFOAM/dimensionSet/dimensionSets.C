@@ -81,7 +81,7 @@ dictionary& dimensionSystems()
     if (!dimensionSystemsPtr_)
     {
         dictionary* cachedPtr = nullptr;
-        thread_local dimensionSystemsPtr_ = new dictionary
+        dimensionSystemsPtr_ = new dictionary
         (
             debug::switchSet
             (
@@ -118,7 +118,7 @@ const HashTable<dimensionedScalar>& unitSet()
 
         const dictionary& unitDict = dict.subDict(unitSetCoeffs);
 
-        thread_local unitSetPtr_ = new HashTable<dimensionedScalar>(unitDict.size());
+        unitSetPtr_ = new HashTable<dimensionedScalar>(unitDict.size());
 
         forAllConstIter(dictionary, unitDict, iter)
         {
@@ -146,7 +146,7 @@ const HashTable<dimensionedScalar>& unitSet()
             )
         );
 
-        thread_local writeUnitSetPtr_ = new dimensionSets(*unitSetPtr_, writeUnitNames);
+        writeUnitSetPtr_ = new dimensionSets(*unitSetPtr_, writeUnitNames);
 
         if (writeUnitNames.size() != 0 && writeUnitNames.size() != 7)
         {

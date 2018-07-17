@@ -244,20 +244,20 @@ Foam::messageStream::operator Foam::OSstream&()
 
 // * * * * * * * * * * * * * * * Global Variables  * * * * * * * * * * * * * //
 
-Foam::messageStream Foam::SeriousError
+thread_local Foam::messageStream Foam::SeriousError
 (
     "--> FOAM Serious Error : ",
     messageStream::SERIOUS,
     100
 );
 
-Foam::messageStream Foam::Warning
+thread_local Foam::messageStream Foam::Warning
 (
     "--> FOAM Warning : ",
     messageStream::WARNING
 );
 
-Foam::messageStream Foam::Info("", messageStream::INFO);
+thread_local Foam::messageStream Foam::Info("", messageStream::INFO);
 
 
 // ************************************************************************* //

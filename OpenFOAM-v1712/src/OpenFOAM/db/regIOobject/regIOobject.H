@@ -126,7 +126,7 @@ public:
         //- Runtime type information
         TypeName("regIOobject");
 
-        static thread_local float fileModificationSkew;
+        static float fileModificationSkew;
 
 
     // Constructors
