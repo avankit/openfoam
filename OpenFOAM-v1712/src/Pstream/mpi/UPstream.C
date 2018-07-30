@@ -678,6 +678,8 @@ void Foam::UPstream::allocatePstreamCommunicator
             PstreamGlobals::MPICommunicators_[index],
            &myProcNo_[index]
         );
+	
+	printf("After 1st call to MPI_Comm_rank (line 676 of UPstream.C); myProcNo_ = %d\n",myProcNo_[index]);
 
         // Set the number of processes to the actual number
         int numProcs;
@@ -732,6 +734,9 @@ void Foam::UPstream::allocatePstreamCommunicator
                     << " cannot find my own rank"
                     << Foam::exit(FatalError);
             }
+
+        printf("After 2nd call to MPI_Comm_rank (line 720 of UPstream.C); myProcNo_ = %d\n",myProcNo_[index]);
+
         }
     }
 }

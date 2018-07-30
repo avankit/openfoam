@@ -34,6 +34,7 @@ Description
 #include "UIPstream.H"
 #include "IPstream.H"
 #include "contiguous.H"
+#include "mpi.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -151,16 +152,24 @@ void Pstream::scatter
     const label comm
 )
 {
+
+    int rank_temp;
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank_temp );
+
     if (UPstream::parRun() && UPstream::nProcs(comm) > 1)
     {
-        // Get my communication order
+	// Get my communication order
         const commsStruct& myComm = comms[UPstream::myProcNo(comm)];
 
+	printf("Inside SCATTER function | myComm.above: %d | on myProcNo: %d | rank: %d\n",myComm.above(),UPstream::myProcNo(comm),rank_temp);
+	
         // Reveive from up
         if (myComm.above() != -1)
         {
+	    printf("Inside the 'Receive from up' section inside SCATTER | on myProcNo: %d |  rank: %d\n",UPstream::myProcNo(comm),rank_temp);
             if (contiguous<T>())
             {
+		printf("Before call to UIPstream::read | on rank(?): %d\n",UPstream::myProcNo(comm));
                 UIPstream::read
                 (
                     UPstream::commsTypes::scheduled,
@@ -173,7 +182,8 @@ void Pstream::scatter
             }
             else
             {
-                IPstream fromAbove
+		printf("Before call to 'IPstream fromAbove' | on myProcNo: %d |  rank: %d\n",UPstream::myProcNo(comm),rank_temp);
+	                IPstream fromAbove
                 (
                     UPstream::commsTypes::scheduled,
                     myComm.above(),
@@ -222,12 +232,17 @@ void Pstream::scatter
 template<class T>
 void Pstream::scatter(T& Value, const int tag, const label comm)
 {
+
+    int rank_temp;
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank_temp );
+
     if (UPstream::nProcs(comm) < UPstream::nProcsSimpleSum)
     {
         scatter(UPstream::linearCommunication(comm), Value, tag, comm);
     }
     else
     {
+	printf("Calling scatter with TreeCommunication. Inputs: tag:%d | on myProcNo: %d |  rank: %d\n",tag,UPstream::myProcNo(comm),rank_temp);
         scatter(UPstream::treeCommunication(comm), Value, tag, comm);
     }
 }

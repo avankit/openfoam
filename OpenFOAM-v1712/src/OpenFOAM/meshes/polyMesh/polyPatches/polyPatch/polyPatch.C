@@ -39,7 +39,7 @@ namespace Foam
 {
     defineTypeNameAndDebug(polyPatch, 0);
 
-    int polyPatch::disallowGenericPolyPatch
+    thread_local int polyPatch::disallowGenericPolyPatch
     (
         debug::debugSwitch("disallowGenericPolyPatch", 0)
     );

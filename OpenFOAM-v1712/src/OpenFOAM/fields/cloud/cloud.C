@@ -33,7 +33,7 @@ namespace Foam
     defineTypeNameAndDebug(cloud, 0);
 
     const word cloud::prefix("lagrangian");
-    word cloud::defaultName("defaultCloud");
+    thread_local word cloud::defaultName("defaultCloud");
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //

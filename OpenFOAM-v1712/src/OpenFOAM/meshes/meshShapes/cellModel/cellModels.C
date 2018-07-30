@@ -30,9 +30,9 @@ License
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-Foam::PtrList<Foam::cellModel> Foam::cellModel::models_;
+thread_local Foam::PtrList<Foam::cellModel> Foam::cellModel::models_;
 
-Foam::List<const Foam::cellModel*> Foam::cellModel::modelPtrs_;
+thread_local Foam::List<const Foam::cellModel*> Foam::cellModel::modelPtrs_;
 
 const Foam::Enum<Foam::cellModel::modelType> Foam::cellModel::modelNames
 {

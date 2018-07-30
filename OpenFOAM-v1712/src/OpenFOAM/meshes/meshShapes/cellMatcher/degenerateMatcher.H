@@ -62,12 +62,12 @@ class degenerateMatcher
     // Static data members
 
         //- Matchers for all degenerate hex shapes
-        static hexMatcher hex;
-        static wedgeMatcher wedge;
-        static prismMatcher prism;
-        static tetWedgeMatcher tetWedge;
-        static pyrMatcher pyr;
-        static tetMatcher tet;
+        static thread_local hexMatcher hex;
+        static thread_local wedgeMatcher wedge;
+        static thread_local prismMatcher prism;
+        static thread_local tetWedgeMatcher tetWedge;
+        static thread_local pyrMatcher pyr;
+        static thread_local tetMatcher tet;
 
     // Static functions
 

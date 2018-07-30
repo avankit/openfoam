@@ -121,7 +121,7 @@ public:
     static const word outputPrefix;
 
     //- Additional characters for writing
-    static label addChars;
+    static thread_local label addChars;
 
 
     // Constructors

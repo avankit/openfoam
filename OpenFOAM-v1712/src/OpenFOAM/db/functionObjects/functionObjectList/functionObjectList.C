@@ -39,7 +39,7 @@ License
 
 /* * * * * * * * * * * * * * * Static Member Data  * * * * * * * * * * * * * */
 
-Foam::fileName Foam::functionObjectList::functionObjectDictPath
+thread_local Foam::fileName Foam::functionObjectList::functionObjectDictPath
 (
     "caseDicts/postProcessing"
 );

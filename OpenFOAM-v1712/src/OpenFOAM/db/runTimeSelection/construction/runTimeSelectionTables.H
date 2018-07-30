@@ -234,7 +234,7 @@ Description
     /* Table constructor called from the table add function */                 \
     void baseType::construct##argNames##ConstructorTables()                    \
     {                                                                          \
-        static bool constructed = false;                                       \
+        static thread_local bool constructed = false;                                       \
         if (!constructed)                                                      \
         {                                                                      \
             constructed = true;                                                \
@@ -297,7 +297,7 @@ Description
     /* Table constructor called from the table add function */                 \
     void baseType<Targ>::construct##argNames##ConstructorTables()              \
     {                                                                          \
-        static bool constructed = false;                                       \
+        static thread_local bool constructed = false;                                       \
         if (!constructed)                                                      \
         {                                                                      \
             constructed = true;                                                \

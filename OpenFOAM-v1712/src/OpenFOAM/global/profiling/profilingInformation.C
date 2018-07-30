@@ -29,7 +29,7 @@ License
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-Foam::label Foam::profilingInformation::nextId_(0);
+thread_local Foam::label Foam::profilingInformation::nextId_(0);
 
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //

@@ -40,11 +40,21 @@ Description
     static const char* typeName_() { return TypeNameString; }                  \
     static const ::Foam::word typeName
 
+//  TLS version
+#define ClassNameNoDebugTLS(TypeNameString)                                       \
+    static const char* typeName_() { return TypeNameString; }                  \
+    static thread_local const ::Foam::word typeName
+
 //- Add typeName information from argument \a TypeNameString to a namespace.
 //  Without debug information.
 #define NamespaceNameNoDebug(TypeNameString)                                   \
     inline const char* typeName_() { return TypeNameString; }                  \
     extern const ::Foam::word typeName
+
+//  TLS version
+#define NamespaceNameNoDebugTLS(TypeNameString)                                   \
+    inline const char* typeName_() { return TypeNameString; }                  \
+    extern thread_local const ::Foam::word typeName
 
 //- Add typeName information from argument \a TemplateNameString to a
 //  template class.  Without debug information.
@@ -66,10 +76,20 @@ public:                                                                        \
     ClassNameNoDebug(TypeNameString);                                          \
     static int debug
 
+//  TLS version
+#define ClassNameTLS(TypeNameString)                                              \
+    ClassNameNoDebugTLS(TypeNameString);                                          \
+    static int debug
+
 //- Add typeName information from argument \a TypeNameString to a namespace.
 //  Also declares debug information.
 #define NamespaceName(TypeNameString)                                          \
     NamespaceNameNoDebug(TypeNameString);                                      \
+    extern int debug
+
+//  TLS version
+#define NamespaceNameTLS(TypeNameString)                                          \
+    NamespaceNameNoDebugTLS(TypeNameString);                                      \
     extern int debug
 
 //- Add typeName information from argument \a TypeNameString to a
@@ -90,9 +110,17 @@ public:                                                                        \
 #define defineTypeNameWithName(Type, Name)                                     \
     const ::Foam::word Type::typeName(Name)
 
+//- TLS version
+#define defineTypeNameWithNameTLS(Type, Name)                                     \
+    thread_local const ::Foam::word Type::typeName(Name)
+
 //- Define the typeName
 #define defineTypeName(Type)                                                   \
     defineTypeNameWithName(Type, Type::typeName_())
+
+//- TLS version
+#define defineTypeNameTLS(Type)                                                   \
+    defineTypeNameWithNameTLS(Type, Type::typeName_())
 
 //- Define the typeName as \a Name for template classes
 #define defineTemplateTypeNameWithName(Type, Name)                             \
@@ -118,6 +146,11 @@ public:                                                                        \
 //- Define the typeName and debug information
 #define defineTypeNameAndDebug(Type, DebugSwitch)                              \
     defineTypeName(Type);                                                      \
+    defineDebugSwitch(Type, DebugSwitch)
+
+//- TLS version 
+#define defineTypeNameAndDebugTLS(Type, DebugSwitch)                              \
+    defineTypeNameTLS(Type);                                                      \
     defineDebugSwitch(Type, DebugSwitch)
 
 //- Define the typeName and debug information, lookup as \a Name

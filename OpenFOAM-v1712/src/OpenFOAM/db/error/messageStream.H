@@ -95,7 +95,7 @@ public:
 
     // Debug switches
 
-        static int level;
+        static thread_local int level;
 
 
     // Constructors

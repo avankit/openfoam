@@ -47,18 +47,18 @@ License
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-bool Foam::argList::argsMandatory_ = true;
-bool Foam::argList::bannerEnabled_ = true;
-bool Foam::argList::checkProcessorDirectories_ = true;
-Foam::SLList<Foam::string>    Foam::argList::validArgs;
-Foam::HashTable<Foam::string> Foam::argList::validOptions;
-Foam::HashTable<Foam::string> Foam::argList::validParOptions;
-Foam::HashTable<Foam::string> Foam::argList::optionUsage;
-Foam::HashTable<std::pair<Foam::word,int>> Foam::argList::validOptionsCompat;
-Foam::SLList<Foam::string>    Foam::argList::notes;
-Foam::string::size_type Foam::argList::usageMin = 20;
-Foam::string::size_type Foam::argList::usageMax = 80;
-Foam::word Foam::argList::postProcessOptionName("postProcess");
+thread_local bool Foam::argList::argsMandatory_ = true;
+thread_local bool Foam::argList::bannerEnabled_ = true;
+thread_local bool Foam::argList::checkProcessorDirectories_ = true;
+thread_local Foam::SLList<Foam::string>    Foam::argList::validArgs;
+thread_local Foam::HashTable<Foam::string> Foam::argList::validOptions;
+thread_local Foam::HashTable<Foam::string> Foam::argList::validParOptions;
+thread_local Foam::HashTable<Foam::string> Foam::argList::optionUsage;
+thread_local Foam::HashTable<std::pair<Foam::word,int>> Foam::argList::validOptionsCompat;
+thread_local Foam::SLList<Foam::string>    Foam::argList::notes;
+thread_local Foam::string::size_type Foam::argList::usageMin = 20;
+thread_local Foam::string::size_type Foam::argList::usageMax = 80;
+thread_local Foam::word Foam::argList::postProcessOptionName("postProcess");
 
 Foam::argList::initValidTables::initValidTables()
 {

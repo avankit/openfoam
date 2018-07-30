@@ -35,7 +35,7 @@ const Foam::word Foam::functionObjects::writeFile::outputPrefix
     "postProcessing"
 );
 
-Foam::label Foam::functionObjects::writeFile::addChars = 7;
+thread_local Foam::label Foam::functionObjects::writeFile::addChars = 7;
 
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //

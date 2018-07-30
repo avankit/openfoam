@@ -119,13 +119,13 @@ class argList
     // Private data
 
         //- Track enabled/disabled mandatory arguments
-        static bool argsMandatory_;
+        static thread_local bool argsMandatory_;
 
         //- Track enabled/disabled banner state
-        static bool bannerEnabled_;
+        static thread_local bool bannerEnabled_;
 
         //- Track enabled/disabled checking of processor directories state
-        static bool checkProcessorDirectories_;
+        static thread_local bool checkProcessorDirectories_;
 
         //- Switch on/off parallel mode.
         //  Must be first to be constructed so destructor is done last.
@@ -177,32 +177,32 @@ public:
     // Static data members
 
         //- A list of valid (mandatory) arguments
-        static SLList<string> validArgs;
+        static thread_local SLList<string> validArgs;
 
         //- A list of valid options
-        static HashTable<string> validOptions;
+        static thread_local HashTable<string> validOptions;
 
         //- A list of valid parallel options
-        static HashTable<string> validParOptions;
+        static thread_local HashTable<string> validParOptions;
 
         //- A list of aliases for options.
         //  Stored as (alias = canonical, version)
-        static HashTable<std::pair<word,int>> validOptionsCompat;
+        static thread_local HashTable<std::pair<word,int>> validOptionsCompat;
 
         //- Short usage information for validOptions
-        static HashTable<string> optionUsage;
+        static thread_local HashTable<string> optionUsage;
 
         //- Additional notes for usage
-        static SLList<string> notes;
+        static thread_local SLList<string> notes;
 
         //- Min offset for displaying usage (default: 20)
-        static string::size_type usageMin;
+        static thread_local string::size_type usageMin;
 
         //- Max screen width for displaying usage (default: 80)
-        static string::size_type usageMax;
+        static thread_local string::size_type usageMax;
 
         //- Standard name for the post-processing option
-        static word postProcessOptionName;
+        static thread_local word postProcessOptionName;
 
         //! \cond internalClass
         class initValidTables

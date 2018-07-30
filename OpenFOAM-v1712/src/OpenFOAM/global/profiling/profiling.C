@@ -33,12 +33,12 @@ License
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-int Foam::profiling::allowed
+thread_local int Foam::profiling::allowed
 (
     Foam::debug::infoSwitch("allowProfiling", 1)
 );
 
-Foam::profiling* Foam::profiling::pool_(nullptr);
+thread_local Foam::profiling* Foam::profiling::pool_(nullptr);
 
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //

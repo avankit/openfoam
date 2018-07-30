@@ -165,10 +165,10 @@ protected:
 
 
         //- Time directory name format
-        static fmtflags format_;
+        static thread_local fmtflags format_;
 
         //- Time directory name precision
-        static int precision_;
+        static thread_local int precision_;
 
         //- Maximum time directory name precision
         static const int maxPrecision_;
@@ -217,7 +217,7 @@ public:
     TypeName("time");
 
     //- The default control dictionary name (normally "controlDict")
-    static word controlDictName;
+    static thread_local word controlDictName;
 
 
     // Constructors

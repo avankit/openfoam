@@ -33,7 +33,7 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(UPstream, 0);
+    defineTypeNameAndDebugTLS(UPstream, 0);
 }
 
 const Foam::Enum

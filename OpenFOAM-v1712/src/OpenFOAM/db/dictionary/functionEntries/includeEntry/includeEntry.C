@@ -33,7 +33,7 @@ License
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-bool Foam::functionEntries::includeEntry::log(false);
+thread_local bool Foam::functionEntries::includeEntry::log(false);
 
 
 namespace Foam

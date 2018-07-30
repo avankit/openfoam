@@ -232,19 +232,19 @@ protected:
 
             //- Cell closedness warning threshold
             //  set as the fraction of un-closed area to closed area
-            static scalar closedThreshold_;
+            static thread_local scalar closedThreshold_;
 
             //- Aspect ratio warning threshold
-            static scalar aspectThreshold_;
+            static thread_local scalar aspectThreshold_;
 
             //- Non-orthogonality warning threshold in deg
-            static scalar nonOrthThreshold_;
+            static thread_local scalar nonOrthThreshold_;
 
             //- Skewness warning threshold
-            static scalar skewThreshold_;
+            static thread_local scalar skewThreshold_;
 
             //- Threshold where faces are considered coplanar
-            static scalar planarCosAngle_;
+            static thread_local scalar planarCosAngle_;
 
 
         // Geometrical calculations

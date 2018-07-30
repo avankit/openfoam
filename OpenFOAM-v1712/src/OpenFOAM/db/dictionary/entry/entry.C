@@ -35,7 +35,7 @@ int Foam::entry::disableFunctionEntries
 );
 
 
-Foam::entry::inputMode Foam::entry::globalInputMode = inputMode::MERGE;
+thread_local Foam::entry::inputMode Foam::entry::globalInputMode = inputMode::MERGE;
 
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //

@@ -43,7 +43,7 @@ namespace Foam
     defineTypeNameAndDebug(fileOperation, 0);
     defineRunTimeSelectionTable(fileOperation, word);
 
-    word fileOperation::defaultFileHandler
+    thread_local word fileOperation::defaultFileHandler
     (
         debug::optimisationSwitches().lookupOrAddDefault
         (
@@ -56,7 +56,7 @@ namespace Foam
     );
 }
 
-Foam::word Foam::fileOperation::processorsDir = "processors";
+thread_local Foam::word Foam::fileOperation::processorsDir = "processors";
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //

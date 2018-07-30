@@ -35,7 +35,7 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(commSchedule, 0);
+    defineTypeNameAndDebugTLS(commSchedule, 0);
 }
 
 

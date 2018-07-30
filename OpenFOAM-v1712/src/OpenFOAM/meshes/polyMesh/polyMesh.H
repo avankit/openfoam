@@ -307,10 +307,10 @@ public:
     TypeName("polyMesh");
 
     //- Return the default region name
-    static word defaultRegion;
+    static thread_local word defaultRegion;
 
     //- Return the mesh sub-directory name (usually "polyMesh")
-    static word meshSubDir;
+    static thread_local word meshSubDir;
 
 
     // Constructors

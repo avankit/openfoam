@@ -73,7 +73,7 @@ public:
         static const word prefix;
 
         //- The default cloud name: %defaultCloud
-        static word defaultName;
+        static thread_local word defaultName;
 
 
     // Constructors

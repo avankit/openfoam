@@ -115,7 +115,7 @@ public:
     static int disableFunctionEntries;
 
     //- The current global input-mode.
-    static inputMode globalInputMode;
+    static thread_local inputMode globalInputMode;
 
 
     // Constructors

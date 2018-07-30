@@ -29,7 +29,7 @@ License
 
 namespace Foam
 {
-defineTypeNameAndDebug(Pstream, 0);
+defineTypeNameAndDebugTLS(Pstream, 0);
 }
 
 

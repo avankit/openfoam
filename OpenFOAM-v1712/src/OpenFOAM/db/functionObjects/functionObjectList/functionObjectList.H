@@ -117,7 +117,7 @@ public:
 
         //- Default relative path to the directory structure
         //- containing the functionObject dictionary files
-        static fileName functionObjectDictPath;
+        static thread_local fileName functionObjectDictPath;
 
 
     // Constructors

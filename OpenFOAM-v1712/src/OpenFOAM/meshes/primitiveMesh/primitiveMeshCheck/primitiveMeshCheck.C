@@ -33,11 +33,11 @@ License
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-Foam::scalar Foam::primitiveMesh::closedThreshold_  = 1.0e-6;
-Foam::scalar Foam::primitiveMesh::aspectThreshold_  = 1000;
-Foam::scalar Foam::primitiveMesh::nonOrthThreshold_ = 70;    // deg
-Foam::scalar Foam::primitiveMesh::skewThreshold_    = 4;
-Foam::scalar Foam::primitiveMesh::planarCosAngle_   = 1.0e-6;
+thread_local Foam::scalar Foam::primitiveMesh::closedThreshold_  = 1.0e-6;
+thread_local Foam::scalar Foam::primitiveMesh::aspectThreshold_  = 1000;
+thread_local Foam::scalar Foam::primitiveMesh::nonOrthThreshold_ = 70;    // deg
+thread_local Foam::scalar Foam::primitiveMesh::skewThreshold_    = 4;
+thread_local Foam::scalar Foam::primitiveMesh::planarCosAngle_   = 1.0e-6;
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //

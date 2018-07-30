@@ -69,13 +69,13 @@ Foam::Time::writeControlNames
 };
 
 
-Foam::Time::fmtflags Foam::Time::format_(Foam::Time::general);
+thread_local Foam::Time::fmtflags Foam::Time::format_(Foam::Time::general);
 
-int Foam::Time::precision_(6);
+thread_local int Foam::Time::precision_(6);
 
 const int Foam::Time::maxPrecision_(3 - log10(SMALL));
 
-Foam::word Foam::Time::controlDictName("controlDict");
+thread_local Foam::word Foam::Time::controlDictName("controlDict");
 
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //

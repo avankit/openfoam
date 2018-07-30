@@ -117,10 +117,10 @@ private:
     // Private Static Data
 
         //- PtrList of predefined models
-        static PtrList<cellModel> models_;
+        static thread_local PtrList<cellModel> models_;
 
         //- Lookup of model pointers (in models_) by index
-        static List<const cellModel*> modelPtrs_;
+        static thread_local List<const cellModel*> modelPtrs_;
 
 
     // Private Data

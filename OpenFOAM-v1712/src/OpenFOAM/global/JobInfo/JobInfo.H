@@ -75,10 +75,10 @@ class JobInfo
 public:
 
     //- Global value for constructed job info
-    static bool constructed;
+    static thread_local bool constructed;
 
     //- Global value for writeJobInfo enabled
-    static bool writeJobInfo;
+    static thread_local bool writeJobInfo;
 
 
     // Constructors
@@ -111,7 +111,7 @@ public:
 };
 
 
-extern JobInfo jobInfo;
+extern thread_local JobInfo jobInfo;
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

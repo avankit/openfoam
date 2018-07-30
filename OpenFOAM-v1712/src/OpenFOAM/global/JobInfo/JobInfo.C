@@ -32,8 +32,8 @@ License
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-bool Foam::JobInfo::writeJobInfo(Foam::debug::infoSwitch("writeJobInfo", 0));
-Foam::JobInfo Foam::jobInfo;
+thread_local bool Foam::JobInfo::writeJobInfo(Foam::debug::infoSwitch("writeJobInfo", 0));
+thread_local Foam::JobInfo Foam::jobInfo;
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 

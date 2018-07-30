@@ -48,7 +48,7 @@ Foam::IOobject::fileCheckTypesNames
 
 
 // Default fileCheck type
-Foam::IOobject::fileCheckTypes Foam::IOobject::fileModificationChecking
+thread_local Foam::IOobject::fileCheckTypes Foam::IOobject::fileModificationChecking
 (
     fileCheckTypesNames.lookup
     (

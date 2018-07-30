@@ -596,6 +596,9 @@ bool Foam::fileOperations::uncollatedFileOperation::read
     {
         // Master reads headerclassname from file. Make sure this gets
         // transferred as well as contents.
+	int rank_temp;
+	MPI_Comm_rank(MPI_COMM_WORLD,&rank_temp);
+	printf("Inside uncollatedFileOperation, calling scatter from myProcNo: %d | rank: %d\n",Pstream::myProcNo(),rank_temp);
         Pstream::scatter(io.headerClassName());
         Pstream::scatter(io.note());
 

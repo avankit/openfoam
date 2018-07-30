@@ -42,8 +42,8 @@ namespace Foam
 {
     defineTypeNameAndDebug(polyMesh, 0);
 
-    word polyMesh::defaultRegion = "region0";
-    word polyMesh::meshSubDir = "polyMesh";
+    thread_local word polyMesh::defaultRegion = "region0";
+    thread_local word polyMesh::meshSubDir = "polyMesh";
 }
 
 

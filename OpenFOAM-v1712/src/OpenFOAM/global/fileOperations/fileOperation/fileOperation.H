@@ -85,10 +85,10 @@ public:
     // Static data
 
         //- The processors directory name (usually "processors")
-        static word processorsDir;
+        static thread_local word processorsDir;
 
         //- Default fileHandler
-        static word defaultFileHandler;
+        static thread_local word defaultFileHandler;
 
 
     // Public data types

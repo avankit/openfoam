@@ -47,7 +47,7 @@ Foam::Ostream& Foam::IOobject::writeBanner(Ostream& os, bool noHint)
 {
     // The version padded with spaces to fit after "Version:  "
     // - initialized with zero-length string to detect if it has been populated
-    static char paddedVersion[39] = "";
+    static thread_local char paddedVersion[39] = "";
 
     if (!*paddedVersion)
     {

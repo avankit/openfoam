@@ -82,7 +82,7 @@ class commSchedule
 
 public:
 
-    ClassName("commSchedule");
+    ClassNameTLS("commSchedule");
 
     // Constructors
 

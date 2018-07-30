@@ -75,7 +75,7 @@ const std::string Foam::FOAMbuildArch =
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "JobInfo.H"
-bool Foam::JobInfo::constructed(false);
+thread_local bool Foam::JobInfo::constructed(false);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 // Global error definitions (initialised by construction)

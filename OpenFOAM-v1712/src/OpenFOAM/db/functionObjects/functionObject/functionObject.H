@@ -170,7 +170,7 @@ public:
     static int debug;
 
     //- Global post-processing mode switch
-    static bool postProcess;
+    static thread_local bool postProcess;
 
     //- Switch write log to Info
     Switch log;

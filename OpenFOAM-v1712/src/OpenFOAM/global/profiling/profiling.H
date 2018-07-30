@@ -90,7 +90,7 @@ public:
     // Static data members
 
         //- Flag if profiling is allowed
-        static int allowed;
+        static thread_local int allowed;
 
 private:
 
@@ -129,7 +129,7 @@ private:
     // Private Static Data Members
 
         //- Only one global pool object is possible
-        static profiling* pool_;
+        static thread_local profiling* pool_;
 
 
     // Private Data Members

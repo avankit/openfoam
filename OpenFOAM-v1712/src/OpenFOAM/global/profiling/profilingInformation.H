@@ -61,7 +61,7 @@ class profilingInformation
     // Private Static Data Members
 
         //- Counter to generate the ids
-        static label nextId_;
+        static thread_local label nextId_;
 
         //- Get a new ID and update the counter
         static label getNextId();

@@ -98,7 +98,7 @@ protected:
 public:
 
     // Declare name of the class and its debug switch
-    ClassName("Pstream");
+    ClassNameTLS("Pstream");
 
 
     // Constructors

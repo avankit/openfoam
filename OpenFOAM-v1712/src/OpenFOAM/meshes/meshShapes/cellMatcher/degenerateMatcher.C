@@ -28,12 +28,12 @@ License
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-Foam::hexMatcher Foam::degenerateMatcher::hex;
-Foam::wedgeMatcher Foam::degenerateMatcher::wedge;
-Foam::prismMatcher Foam::degenerateMatcher::prism;
-Foam::tetWedgeMatcher Foam::degenerateMatcher::tetWedge;
-Foam::pyrMatcher Foam::degenerateMatcher::pyr;
-Foam::tetMatcher Foam::degenerateMatcher::tet;
+thread_local Foam::hexMatcher Foam::degenerateMatcher::hex;
+thread_local Foam::wedgeMatcher Foam::degenerateMatcher::wedge;
+thread_local Foam::prismMatcher Foam::degenerateMatcher::prism;
+thread_local Foam::tetWedgeMatcher Foam::degenerateMatcher::tetWedge;
+thread_local Foam::pyrMatcher Foam::degenerateMatcher::pyr;
+thread_local Foam::tetMatcher Foam::degenerateMatcher::tet;
 
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //

@@ -36,7 +36,7 @@ namespace Foam
     defineRunTimeSelectionTable(functionObject, dictionary);
 }
 
-bool Foam::functionObject::postProcess(false);
+thread_local bool Foam::functionObject::postProcess(false);
 
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //

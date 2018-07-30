@@ -93,7 +93,7 @@ Description
     /* Table memberFunction called from the table add function */              \
     void baseType::construct##memberFunction##argNames##MemberFunctionTables() \
     {                                                                          \
-        static bool constructed = false;                                       \
+        static thread_local bool constructed = false;                                       \
         if (!constructed)                                                      \
         {                                                                      \
             constructed = true;                                                \
@@ -167,7 +167,7 @@ Description
     void baseType<Targ>::construct##memberFunction##argNames##                 \
     MemberFunctionTables()                                                     \
     {                                                                          \
-        static bool constructed = false;                                       \
+        static thread_local bool constructed = false;                                       \
         if (!constructed)                                                      \
         {                                                                      \
             constructed = true;                                                \

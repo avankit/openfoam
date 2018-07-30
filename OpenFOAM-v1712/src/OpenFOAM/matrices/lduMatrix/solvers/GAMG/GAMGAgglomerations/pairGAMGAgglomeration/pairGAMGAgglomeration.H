@@ -57,7 +57,7 @@ class pairGAMGAgglomeration
         label mergeLevels_;
 
         //- Direction of cell loop for the current level
-        static bool forward_;
+        static thread_local bool forward_;
 
 
 protected:

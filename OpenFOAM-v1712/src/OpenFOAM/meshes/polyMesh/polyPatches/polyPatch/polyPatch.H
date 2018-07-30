@@ -129,7 +129,7 @@ public:
     TypeName("patch");
 
     //- Debug switch to disallow the use of genericPolyPatch
-    static int disallowGenericPolyPatch;
+    static thread_local int disallowGenericPolyPatch;
 
 
     // Declare run-time constructor selection tables

@@ -187,7 +187,7 @@ public:
     // Static data members
 
         //- Type of file modification checking
-        static fileCheckTypes fileModificationChecking;
+        static thread_local fileCheckTypes fileModificationChecking;
 
 
     // Static Member Functions

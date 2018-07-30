@@ -82,7 +82,7 @@ public:
     // Static data members
 
         //- Report to stdout which file is included
-        static bool log;
+        static thread_local bool log;
 
 
     // Member Functions
