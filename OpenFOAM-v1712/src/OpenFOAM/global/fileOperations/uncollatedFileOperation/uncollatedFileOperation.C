@@ -568,6 +568,9 @@ bool Foam::fileOperations::uncollatedFileOperation::read
     bool ok = true;
     if (Pstream::master() || !masterOnly)
     {
+
+	printf("Inside uncollatedFileOperation::read, if #1\n");
+
         if (debug)
         {
             Pout<< "uncollatedFileOperation::read() : "
@@ -598,7 +601,7 @@ bool Foam::fileOperations::uncollatedFileOperation::read
         // transferred as well as contents.
 	int rank_temp;
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank_temp);
-	printf("Inside uncollatedFileOperation, calling scatter from myProcNo: %d | rank: %d\n",Pstream::myProcNo(),rank_temp);
+	printf("Inside uncollatedFileOperation::read, if #2, calling scatter from myProcNo: %d | rank: %d\n",Pstream::myProcNo(),rank_temp);
         Pstream::scatter(io.headerClassName());
         Pstream::scatter(io.note());
 
@@ -642,6 +645,7 @@ bool Foam::fileOperations::uncollatedFileOperation::read
             ok = ok && okWrite;
         }
     }
+    printf("Leaving uncollatedFileOperation::read\n");
     return ok;
 }
 
