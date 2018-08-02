@@ -107,11 +107,11 @@ public:
 
 
         //- Runtime type information
-        TypeName("fileOperation");
+        TypeNameTLS("fileOperation");
 
 
     //- Static fileOperation
-    static autoPtr<fileOperation> fileHandlerPtr_;
+    static thread_local autoPtr<fileOperation> fileHandlerPtr_;
 
 
     // Constructors
