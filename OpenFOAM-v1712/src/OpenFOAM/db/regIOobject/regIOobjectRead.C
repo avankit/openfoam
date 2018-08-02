@@ -43,7 +43,7 @@ bool Foam::regIOobject::readHeaderOk
     int rank_temp;
     MPI_Comm_rank(MPI_COMM_WORLD,&rank_temp);
 
-    printf("In regIOobjectRead.C, checking values:\n\tglobal(): %d | fileModChckng: %d | timeStampMaster: %d | inotifyMaster: %d",global(),regIOobject::fileModificationChecking,timeStampMaster,inotifyMaster);
+    printf("In regIOobjectRead.C, checking values:\n\tglobal(): %d | fileModChckng: %d | timeStampMaster: %d | inotifyMaster: %d\n",global(),regIOobject::fileModificationChecking,timeStampMaster,inotifyMaster);
     // Everyone check or just master
     bool masterOnly =
         global()

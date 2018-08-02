@@ -32,7 +32,7 @@ License
 
 namespace Foam
 {
-defineTypeNameAndDebug(baseIOdictionary, 0);
+defineTypeNameAndDebugTLS(baseIOdictionary, 0);
 
 thread_local bool baseIOdictionary::writeDictionaries
 (

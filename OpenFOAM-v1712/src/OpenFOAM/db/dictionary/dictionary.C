@@ -33,7 +33,7 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(dictionary, 0);
+    defineTypeNameAndDebugTLS(dictionary, 0);
 }
 
 const Foam::dictionary Foam::dictionary::null;

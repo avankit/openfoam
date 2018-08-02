@@ -386,7 +386,7 @@ private:
 public:
 
     // Declare name of the class and its debug switch
-    ClassName("dictionary");
+    ClassNameTLS("dictionary");
 
     //- An empty dictionary, which is also the parent for all dictionaries
     static const dictionary null;

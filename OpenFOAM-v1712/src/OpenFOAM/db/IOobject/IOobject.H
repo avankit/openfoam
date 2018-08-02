@@ -129,7 +129,7 @@ public:
             inotifyMaster
         };
 
-        static const Enum<fileCheckTypes> fileCheckTypesNames;
+        static thread_local const Enum<fileCheckTypes> fileCheckTypesNames;
 
 
 private:
@@ -181,7 +181,7 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("IOobject");
+    TypeNameTLS("IOobject");
 
 
     // Static data members
