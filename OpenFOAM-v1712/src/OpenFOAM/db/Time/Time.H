@@ -214,7 +214,7 @@ private:
 
 public:
 
-    TypeName("time");
+    TypeNameTLS("time");
 
     //- The default control dictionary name (normally "controlDict")
     static thread_local word controlDictName;

@@ -66,9 +66,19 @@ Description
     ClassNameNoDebug(TypeNameString);                                          \
     virtual const word& type() const { return typeName; }
 
+//- TLS version
+#define TypeNameNoDebugTLS(TypeNameString)                                        \
+    ClassNameNoDebugTLS(TypeNameString);                                          \
+    virtual const word& type() const { return typeName; }
+
 //- Declare a ClassName() with extra virtual type info
 #define TypeName(TypeNameString)                                               \
     ClassName(TypeNameString);                                                 \
+    virtual const word& type() const { return typeName; }
+
+//- TLS version
+#define TypeNameTLS(TypeNameString)                                               \
+    ClassNameTLS(TypeNameString);                                                 \
     virtual const word& type() const { return typeName; }
 
 

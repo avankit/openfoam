@@ -37,7 +37,7 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(Time, 0);
+    defineTypeNameAndDebugTLS(Time, 0);
 }
 
 thread_local const Foam::Enum
