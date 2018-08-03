@@ -108,10 +108,10 @@ public:
 
 
         //- Names for writeControls
-        static const Enum<writeControls> writeControlNames;
+        static thread_local const Enum<writeControls> writeControlNames;
 
         //- Names for stopAtControls
-        static const Enum<stopAtControls> stopAtControlNames;
+        static thread_local const Enum<stopAtControls> stopAtControlNames;
 
 
 private:
@@ -171,7 +171,7 @@ protected:
         static thread_local int precision_;
 
         //- Maximum time directory name precision
-        static const int maxPrecision_;
+        static thread_local const int maxPrecision_;
 
 
         //- Adjust the time step so that writing occurs at the specified time
