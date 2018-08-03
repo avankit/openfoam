@@ -38,7 +38,7 @@ License
 
 namespace Foam
 {
-    autoPtr<fileOperation> fileOperation::fileHandlerPtr_;
+    thread_local autoPtr<fileOperation> fileOperation::fileHandlerPtr_;
 
     defineTypeNameAndDebug(fileOperation, 0);
     defineRunTimeSelectionTable(fileOperation, word);

@@ -129,7 +129,7 @@ public:
             inotifyMaster
         };
 
-        static const Enum<fileCheckTypes> fileCheckTypesNames;
+        static thread_local const Enum<fileCheckTypes> fileCheckTypesNames;
 
 
 private:

@@ -27,6 +27,7 @@ License
 #include "objectRegistry.H"
 #include "Pstream.H"
 #include "Time.H"
+#include "mpi.h"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -34,6 +35,10 @@ Foam::unwatchedIOdictionary::unwatchedIOdictionary(const IOobject& io)
 :
     baseIOdictionary(io)
 {
+    int rank_temp;
+    MPI_Comm_rank(MPI_COMM_WORLD,&rank_temp);
+    printf("Inside unwatchedIOdictionary, before calling 'readHeaderOk', on rank: %d\n",rank_temp);
+
     readHeaderOk(IOstream::ASCII, typeName);
 
     // For if MUST_READ_IF_MODIFIED

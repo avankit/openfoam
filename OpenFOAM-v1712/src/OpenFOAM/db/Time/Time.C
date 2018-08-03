@@ -40,7 +40,7 @@ namespace Foam
     defineTypeNameAndDebug(Time, 0);
 }
 
-const Foam::Enum
+thread_local const Foam::Enum
 <
     Foam::Time::stopAtControls
 >
@@ -55,7 +55,7 @@ Foam::Time::stopAtControlNames
 };
 
 
-const Foam::Enum
+thread_local const Foam::Enum
 <
     Foam::Time::writeControls
 >
@@ -73,7 +73,7 @@ thread_local Foam::Time::fmtflags Foam::Time::format_(Foam::Time::general);
 
 thread_local int Foam::Time::precision_(6);
 
-const int Foam::Time::maxPrecision_(3 - log10(SMALL));
+thread_local const int Foam::Time::maxPrecision_(3 - log10(SMALL));
 
 thread_local Foam::word Foam::Time::controlDictName("controlDict");
 

@@ -34,7 +34,7 @@ namespace Foam
     defineTypeNameAndDebug(IOobject, 0);
 }
 
-const Foam::Enum
+thread_local const Foam::Enum
 <
     Foam::IOobject::fileCheckTypes
 >
