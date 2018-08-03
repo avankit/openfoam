@@ -40,7 +40,7 @@ namespace Foam
 {
     thread_local autoPtr<fileOperation> fileOperation::fileHandlerPtr_;
 
-    defineTypeNameAndDebugTLS(fileOperation, 0);
+    defineTypeNameAndDebug(fileOperation, 0);
     defineRunTimeSelectionTable(fileOperation, word);
 
     thread_local word fileOperation::defaultFileHandler

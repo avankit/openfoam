@@ -67,7 +67,7 @@ class uncollatedFileOperation
 public:
 
         //- Runtime type information
-        TypeNameTLS("uncollated");
+        TypeName("uncollated");
 
 
     // Constructors

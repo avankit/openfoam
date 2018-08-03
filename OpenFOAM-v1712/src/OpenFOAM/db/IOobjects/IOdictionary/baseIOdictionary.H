@@ -63,7 +63,7 @@ class baseIOdictionary
 
 public:
 
-    TypeNameTLS("dictionary");
+    TypeName("dictionary");
 
 
     // Constructors

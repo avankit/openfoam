@@ -31,7 +31,7 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebugTLS(objectRegistry, 0);
+    defineTypeNameAndDebug(objectRegistry, 0);
 }
 
 
