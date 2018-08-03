@@ -37,7 +37,7 @@ namespace Foam
 {
 namespace fileOperations
 {
-    defineTypeNameAndDebug(uncollatedFileOperation, 0);
+    defineTypeNameAndDebugTLS(uncollatedFileOperation, 0);
     addToRunTimeSelectionTable(fileOperation, uncollatedFileOperation, word);
 }
 }

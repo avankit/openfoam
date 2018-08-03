@@ -107,7 +107,7 @@ public:
 
 
         //- Runtime type information
-        TypeName("fileOperation");
+        TypeNameTLS("fileOperation");
 
 
     //- Static fileOperation

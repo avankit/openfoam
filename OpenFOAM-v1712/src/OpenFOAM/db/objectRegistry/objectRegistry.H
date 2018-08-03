@@ -104,7 +104,7 @@ class objectRegistry
 public:
 
     //- Declare type name for this IOobject
-    TypeName("objectRegistry");
+    TypeNameTLS("objectRegistry");
 
 
     // Constructors
