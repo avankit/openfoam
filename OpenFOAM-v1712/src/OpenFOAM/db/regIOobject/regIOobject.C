@@ -33,7 +33,7 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(regIOobject, 0);
+    defineTypeNameAndDebugTLS(regIOobject, 0);
 }
 
 float Foam::regIOobject::fileModificationSkew
