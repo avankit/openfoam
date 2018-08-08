@@ -46,6 +46,7 @@ SourceFiles
 #include "Enum.H"
 #include "ListOps.H"
 #include "LIFOStack.H"
+#include "mpi.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -197,7 +198,10 @@ private:
         static thread_local LIFOStack<label> freeComms_;
 
         //- My processor number
-        static thread_local DynamicList<int> myProcNo_;
+	// Making this public to be able to change this from within UIPread.C
+        public: static thread_local DynamicList<int> myProcNo_;
+
+private:
 
         //- List of process IDs
         static thread_local DynamicList<List<int>> procIDs_;
@@ -438,13 +442,19 @@ public:
         //- Am I the master process
         static bool master(const label communicator = 0)
         {
-            return myProcNo_[communicator] == masterNo();
+	    int rank_temp;
+	    MPI_Comm_rank(MPI_COMM_WORLD, &rank_temp);
+            // return myProcNo_[communicator] == masterNo();
+	    return rank_temp == masterNo();
         }
 
         //- Number of this process (starting from masterNo() = 0)
         static int myProcNo(const label communicator = 0)
         {
-            return myProcNo_[communicator];
+	    int rank_temp;
+            MPI_Comm_rank(MPI_COMM_WORLD, &rank_temp);
+            // return myProcNo_[communicator];
+	    return rank_temp;
         }
 
         static label parent(const label communicator)
