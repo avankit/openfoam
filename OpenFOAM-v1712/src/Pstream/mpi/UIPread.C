@@ -87,15 +87,17 @@ Foam::UIPstream::UIPstream
         // and set it
         if (!wantedSize)
         {
-	    printf("\n   Before MPI_Probe #1 | SRC: %d | called from rank: %d\n\n",fromProcNo_,rank_temp);
+	    printf("\n   Before MPI_Probe #1 | SRC: %d | called from rank: %d | (myProcNo: %d)\n\n",fromProcNo_,rank_temp,UPstream::myProcNo());
             MPI_Probe
             (
                 fromProcNo_,
                 tag_,
                 PstreamGlobals::MPICommunicators_[comm_],
                 &status
-            );
-	    printf("After MPI_Probe, before MPI_Get_count | called from rank: %d\n",rank_temp);
+            );	    
+	    printf("After MPI_Probe, before MPI_Get_count | called from rank: %d | (myProcNo: %d)\n",rank_temp,UPstream::myProcNo());
+	    // UPstream::myProcNo_[0] = rank_temp;
+	    // printf("Changed value of myProcNo_ to: %d\n\n",UPstream::myProcNo());
             MPI_Get_count(&status, MPI_BYTE, &messageSize_);
 
             externalBuf_.setCapacity(messageSize_);

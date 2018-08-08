@@ -159,7 +159,8 @@ void Pstream::scatter
     if (UPstream::parRun() && UPstream::nProcs(comm) > 1)
     {
 	// Get my communication order
-        const commsStruct& myComm = comms[UPstream::myProcNo(comm)];
+        //const commsStruct& myComm = comms[UPstream::myProcNo(comm)];
+	const commsStruct& myComm = comms[rank_temp];
 
 	printf("Inside SCATTER function | myComm.above: %d | on myProcNo: %d | rank: %d\n",myComm.above(),UPstream::myProcNo(comm),rank_temp);
 	
