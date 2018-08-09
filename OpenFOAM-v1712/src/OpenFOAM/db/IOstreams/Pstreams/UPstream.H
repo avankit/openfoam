@@ -442,10 +442,10 @@ public:
         //- Am I the master process
         static bool master(const label communicator = 0)
         {
-	    int rank_temp;
-	    MPI_Comm_rank(MPI_COMM_WORLD, &rank_temp);
-            // return myProcNo_[communicator] == masterNo();
-	    return rank_temp == masterNo();
+	    // int rank_temp;
+	    // MPI_Comm_rank(MPI_COMM_WORLD, &rank_temp);
+            return myProcNo_[communicator] == masterNo();
+	    // return rank_temp == masterNo();
         }
 
         //- Number of this process (starting from masterNo() = 0)

@@ -35,10 +35,10 @@ Foam::unwatchedIOdictionary::unwatchedIOdictionary(const IOobject& io)
 :
     baseIOdictionary(io)
 {
-    int rank_temp;
-    MPI_Comm_rank(MPI_COMM_WORLD,&rank_temp);
+    // int rank_temp;
+    // MPI_Comm_rank(MPI_COMM_WORLD,&rank_temp);
 
-    printf("Inside unwatchedIOdictionary, before calling 'readHeaderOk', on rank: %d\n",rank_temp);
+    printf("Inside unwatchedIOdictionary, before calling 'readHeaderOk'\n"); // , on rank: %d\n",rank_temp);
 
     readHeaderOk(IOstream::ASCII, typeName);
 

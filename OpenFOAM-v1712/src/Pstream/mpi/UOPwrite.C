@@ -65,14 +65,14 @@ bool Foam::UOPstream::write
 
     PstreamGlobals::checkCommunicator(communicator, toProcNo);
 
-    thread_local int rank_temp;
-    MPI_Comm_rank( PstreamGlobals::MPICommunicators_[communicator], &rank_temp);
+    // thread_local int rank_temp;
+    // MPI_Comm_rank( PstreamGlobals::MPICommunicators_[communicator], &rank_temp);
 
     bool transferFailed = true;
 
     if (commsType == commsTypes::blocking)
     {
-	printf("Before MPI_Bsend | DEST: %d | called from rank: %d\n",toProcNo,rank_temp);
+	// printf("Before MPI_Bsend | DEST: %d | called from rank: %d\n",toProcNo,rank_temp);
         transferFailed = MPI_Bsend
         (
             const_cast<char*>(buf),
@@ -93,7 +93,7 @@ bool Foam::UOPstream::write
     }
     else if (commsType == commsTypes::scheduled)
     {
-	printf("Before MPI_Send | DEST: %d | called from rank: %d\n",toProcNo,rank_temp);
+	// printf("Before MPI_Send | DEST: %d | called from rank: %d\n",toProcNo,rank_temp);
         transferFailed = MPI_Send
         (
             const_cast<char*>(buf),
@@ -116,7 +116,7 @@ bool Foam::UOPstream::write
     {
         MPI_Request request;
 	
-	printf("Before MPI_Isend | DEST: %d | called from rank: %d\n",toProcNo,rank_temp);
+	// printf("Before MPI_Isend | DEST: %d | called from rank: %d\n",toProcNo,rank_temp);
         transferFailed = MPI_Isend
         (
             const_cast<char*>(buf),

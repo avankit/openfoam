@@ -153,21 +153,21 @@ void Pstream::scatter
 )
 {
 
-    int rank_temp;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank_temp );
+    // int rank_temp;
+    // MPI_Comm_rank( MPI_COMM_WORLD, &rank_temp );
 
     if (UPstream::parRun() && UPstream::nProcs(comm) > 1)
     {
 	// Get my communication order
-        //const commsStruct& myComm = comms[UPstream::myProcNo(comm)];
-	const commsStruct& myComm = comms[rank_temp];
+        const commsStruct& myComm = comms[UPstream::myProcNo(comm)];
+	// const commsStruct& myComm = comms[rank_temp];
 
-	printf("Inside SCATTER function | myComm.above: %d | on myProcNo: %d | rank: %d\n",myComm.above(),UPstream::myProcNo(comm),rank_temp);
+	// printf("Inside SCATTER function | myComm.above: %d | on myProcNo: %d | rank: %d\n",myComm.above(),UPstream::myProcNo(comm),rank_temp);
 	
         // Reveive from up
         if (myComm.above() != -1)
         {
-	    printf("Inside the 'Receive from up' section inside SCATTER | on myProcNo: %d |  rank: %d\n",UPstream::myProcNo(comm),rank_temp);
+	    // printf("Inside the 'Receive from up' section inside SCATTER | on myProcNo: %d |  rank: %d\n",UPstream::myProcNo(comm),rank_temp);
             if (contiguous<T>())
             {
 		printf("Before call to UIPstream::read | on rank(?): %d\n",UPstream::myProcNo(comm));
@@ -183,7 +183,7 @@ void Pstream::scatter
             }
             else
             {
-		printf("Before call to 'IPstream fromAbove' | on myProcNo: %d |  rank: %d\n",UPstream::myProcNo(comm),rank_temp);
+		// printf("Before call to 'IPstream fromAbove' | on myProcNo: %d |  rank: %d\n",UPstream::myProcNo(comm),rank_temp);
 	                IPstream fromAbove
                 (
                     UPstream::commsTypes::scheduled,
@@ -234,8 +234,8 @@ template<class T>
 void Pstream::scatter(T& Value, const int tag, const label comm)
 {
 
-    int rank_temp;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank_temp );
+    // int rank_temp;
+    // MPI_Comm_rank( MPI_COMM_WORLD, &rank_temp );
 
     if (UPstream::nProcs(comm) < UPstream::nProcsSimpleSum)
     {
@@ -243,7 +243,7 @@ void Pstream::scatter(T& Value, const int tag, const label comm)
     }
     else
     {
-	printf("Calling scatter with TreeCommunication. Inputs: tag:%d | on myProcNo: %d |  rank: %d\n",tag,UPstream::myProcNo(comm),rank_temp);
+	// printf("Calling scatter with TreeCommunication. Inputs: tag:%d | on myProcNo: %d |  rank: %d\n",tag,UPstream::myProcNo(comm),rank_temp);
         scatter(UPstream::treeCommunication(comm), Value, tag, comm);
     }
 }

@@ -60,10 +60,10 @@ Foam::UIPstream::UIPstream
     setOpened();
     setGood();
     
-    thread_local int rank_temp;
-    MPI_Comm_rank( PstreamGlobals::MPICommunicators_[comm_], &rank_temp);
+    // int rank_temp;
+    // MPI_Comm_rank( PstreamGlobals::MPICommunicators_[comm_], &rank_temp);
 
-    printf("Inside UIPstream | fromProcNo: %d | fromProcNo_: %d | comm_: %d | comm_(using PstreaGlobals): %d | called from rank: %d\n",fromProcNo,fromProcNo_,comm_,PstreamGlobals::MPICommunicators_[comm_],rank_temp);
+    // printf("Inside UIPstream | fromProcNo: %d | fromProcNo_: %d | comm_: %d | comm_(using PstreaGlobals): %d | called from rank: %d\n",fromProcNo,fromProcNo_,comm_,PstreamGlobals::MPICommunicators_[comm_],rank_temp);
     if (commsType == commsTypes::nonBlocking)
     {
         // Message is already received into externalBuf
@@ -87,7 +87,7 @@ Foam::UIPstream::UIPstream
         // and set it
         if (!wantedSize)
         {
-	    printf("\n   Before MPI_Probe #1 | SRC: %d | called from rank: %d | (myProcNo: %d)\n\n",fromProcNo_,rank_temp,UPstream::myProcNo());
+	    // printf("\n   Before MPI_Probe #1 | SRC: %d | called from rank: %d | (myProcNo: %d)\n\n",fromProcNo_,rank_temp,UPstream::myProcNo());
             MPI_Probe
             (
                 fromProcNo_,
@@ -95,9 +95,9 @@ Foam::UIPstream::UIPstream
                 PstreamGlobals::MPICommunicators_[comm_],
                 &status
             );	    
-	    printf("After MPI_Probe, before MPI_Get_count | called from rank: %d | (myProcNo: %d)\n",rank_temp,UPstream::myProcNo());
-	    UPstream::myProcNo_[0] = rank_temp;
-	    printf("Changed value of myProcNo_ to: %d\n\n",UPstream::myProcNo());
+	    // printf("After MPI_Probe, before MPI_Get_count | called from rank: %d | (myProcNo: %d)\n",rank_temp,UPstream::myProcNo());
+	    // UPstream::myProcNo_[0] = rank_temp;
+	    // printf("Changed value of myProcNo_ to: %d\n\n",UPstream::myProcNo());
             MPI_Get_count(&status, MPI_BYTE, &messageSize_);
 
             externalBuf_.setCapacity(messageSize_);
@@ -159,8 +159,8 @@ Foam::UIPstream::UIPstream(const int fromProcNo, PstreamBuffers& buffers)
     setOpened();
     setGood();
 
-    thread_local int rank_temp;
-    MPI_Comm_rank( PstreamGlobals::MPICommunicators_[comm_], &rank_temp);
+    // int rank_temp;
+    // MPI_Comm_rank( PstreamGlobals::MPICommunicators_[comm_], &rank_temp);
 
 
     if (commsType() == commsTypes::nonBlocking)
@@ -196,7 +196,7 @@ Foam::UIPstream::UIPstream(const int fromProcNo, PstreamBuffers& buffers)
         // and set it
         if (!wantedSize)
         {
-	    printf("Before MPI_Probe #2 | SRC: %d | called from rank: %d\n",fromProcNo_,rank_temp);
+	    // printf("Before MPI_Probe #2 | SRC: %d | called from rank: %d\n",fromProcNo_,rank_temp);
             MPI_Probe
             (
                 fromProcNo_,
