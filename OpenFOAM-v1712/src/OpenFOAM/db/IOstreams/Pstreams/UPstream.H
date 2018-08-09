@@ -451,10 +451,15 @@ public:
         //- Number of this process (starting from masterNo() = 0)
         static int myProcNo(const label communicator = 0)
         {
-	    int rank_temp;
-            MPI_Comm_rank(MPI_COMM_WORLD, &rank_temp);
-            // return myProcNo_[communicator];
-	    return rank_temp;
+	    int flag = 0;
+	    MPI_Initialized(&flag);
+	    if(flag) {
+		int rank_temp;
+		MPI_Comm_rank(MPI_COMM_WORLD, &rank_temp);
+		return rank_temp;
+	    } 
+	    else
+		return myProcNo_[communicator];	    
         }
 
         static label parent(const label communicator)
