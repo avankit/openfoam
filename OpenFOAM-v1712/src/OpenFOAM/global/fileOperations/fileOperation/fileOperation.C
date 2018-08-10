@@ -194,7 +194,7 @@ bool Foam::fileOperation::writeObject
     if (valid)
     {
         fileName pathName(io.objectPath());
-
+	printf("Inside fileOperationLLwriteObject. Making directory: %s\n",pathName.path().c_str());
         mkDir(pathName.path());
 
         autoPtr<Ostream> osPtr

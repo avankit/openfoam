@@ -73,7 +73,7 @@ Description
 
 namespace Foam
 {
-    defineTypeNameAndDebugTLS(POSIX, 0);
+    defineTypeNameAndDebug(POSIX, 0);
 }
 
 
@@ -375,7 +375,7 @@ bool Foam::mkDir(const fileName& pathName, mode_t mode)
     {
 	printf("\tJust before switch(errno) in POSIX; errno = %d\n",errno);
 	int myErrNo = errno;
-        switch (myErrNo)
+        switch (errno)
         {
             case EPERM:
             {

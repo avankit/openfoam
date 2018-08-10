@@ -124,7 +124,7 @@ public:
     // Static data
 
         //- Runtime type information
-        TypeName("regIOobject");
+        TypeNameTLS("regIOobject");
 
         static float fileModificationSkew;
 

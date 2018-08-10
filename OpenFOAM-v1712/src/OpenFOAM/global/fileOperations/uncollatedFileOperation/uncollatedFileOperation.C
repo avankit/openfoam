@@ -169,6 +169,7 @@ bool Foam::fileOperations::uncollatedFileOperation::mkDir
     mode_t mode
 ) const
 {
+    printf("Inside uncollatedFileOperation's mkdir; dir = %s; mode = %d.\n",dir.c_str(),mode);
     return Foam::mkDir(dir, mode);
 }
 
