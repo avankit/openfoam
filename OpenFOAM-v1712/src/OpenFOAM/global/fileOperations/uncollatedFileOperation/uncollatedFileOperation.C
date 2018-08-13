@@ -169,7 +169,7 @@ bool Foam::fileOperations::uncollatedFileOperation::mkDir
     mode_t mode
 ) const
 {
-    printf("Inside uncollatedFileOperation's mkdir; dir = %s; mode = %d.\n",dir.c_str(),mode);
+    // printf("Inside uncollatedFileOperation's mkdir; dir = %s; mode = %d.\n",dir.c_str(),mode);
     return Foam::mkDir(dir, mode);
 }
 
@@ -570,7 +570,7 @@ bool Foam::fileOperations::uncollatedFileOperation::read
     if (Pstream::master() || !masterOnly)
     {
 
-	printf("Inside uncollatedFileOperation::read, if #1\n");
+	// printf("Inside uncollatedFileOperation::read, if #1\n");
 
         if (debug)
         {
@@ -602,7 +602,7 @@ bool Foam::fileOperations::uncollatedFileOperation::read
         // transferred as well as contents.
 	// int rank_temp;
 	// MPI_Comm_rank(MPI_COMM_WORLD,&rank_temp);
-	printf("Inside uncollatedFileOperation::read, if #2, calling scatter from myProcNo: %d \n",Pstream::myProcNo());
+	// printf("Inside uncollatedFileOperation::read, if #2, calling scatter from myProcNo: %d \n",Pstream::myProcNo());
         Pstream::scatter(io.headerClassName());
         Pstream::scatter(io.note());
 
@@ -646,7 +646,7 @@ bool Foam::fileOperations::uncollatedFileOperation::read
             ok = ok && okWrite;
         }
     }
-    printf("Leaving uncollatedFileOperation::read\n");
+    // printf("Leaving uncollatedFileOperation::read\n");
     return ok;
 }
 

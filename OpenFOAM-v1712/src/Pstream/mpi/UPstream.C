@@ -209,7 +209,8 @@ void Foam::UPstream::exit(int errnum)
     if (!flag)
     {
         // Not initialized - just exit
-        ::exit(errnum);
+        // ::exit(errnum);
+	MPI_Finalize();
         return;
     }
 

@@ -43,7 +43,7 @@ bool Foam::regIOobject::readHeaderOk
     // int rank_temp;
     // MPI_Comm_rank(MPI_COMM_WORLD,&rank_temp);
 
-    printf("In regIOobjectRead.C, checking values:\n\tglobal(): %d | fileModChckng: %d | timeStampMaster: %d | inotifyMaster: %d\n",global(),regIOobject::fileModificationChecking,timeStampMaster,inotifyMaster);
+    // printf("In regIOobjectRead.C, checking values:\n\tglobal(): %d | fileModChckng: %d | timeStampMaster: %d | inotifyMaster: %d\n",global(),regIOobject::fileModificationChecking,timeStampMaster,inotifyMaster);
     // Everyone check or just master
     bool masterOnly =
         global()
@@ -58,22 +58,22 @@ bool Foam::regIOobject::readHeaderOk
     bool isHeaderOk = false;
     if (readOpt() == IOobject::READ_IF_PRESENT)
     {
-	printf("Inside if readOpt == READ_IF_PRESENT\n");
+	// printf("Inside if readOpt == READ_IF_PRESENT\n");
         if (masterOnly)
         {
-	    printf("Inside sub-if for masterOnly\n");
+	    // printf("Inside sub-if for masterOnly\n");
             if (Pstream::master())
             {
-		printf("Inside sub-sub-if for Pstream::master()\n");
+		// printf("Inside sub-sub-if for Pstream::master()\n");
                 isHeaderOk = headerOk();
             }
-	    printf("Calling scatter from inside sub-if of regIOobjectRead.C\n");
+	    // printf("Calling scatter from inside sub-if of regIOobjectRead.C\n");
             Pstream::scatter(isHeaderOk);
         }
         else
         {
             isHeaderOk = headerOk();
-	    printf("Inside sub-else, setting isHeaderOk to %s\n",isHeaderOk ? "true":"false");
+	    // printf("Inside sub-else, setting isHeaderOk to %s\n",isHeaderOk ? "true":"false");
         }
     }
 
@@ -86,7 +86,7 @@ bool Foam::regIOobject::readHeaderOk
      || isHeaderOk
     )
     {
-	printf("Second if in readHeaderOk, before returning value of fileHandler().read; this will call uncollatedFileOperation::read\n");
+	// printf("Second if in readHeaderOk, before returning value of fileHandler().read; this will call uncollatedFileOperation::read\n");
         return fileHandler().read(*this, masterOnly, format, typeName);
     }
     else

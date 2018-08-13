@@ -364,8 +364,8 @@ bool Foam::mkDir(const fileName& pathName, mode_t mode)
 
     // Construct path directory if does not exist
     int mkdir_ret = ::mkdir(pathName.c_str(), mode);
-    printf("---------------\nValue returned by mkdir: %d \n",mkdir_ret);
-    printf("String being set: %s\n--------------\n",pathName.c_str());
+    // printf("---------------\nValue returned by mkdir: %d \n",mkdir_ret);
+    // printf("String being set: %s\n--------------\n",pathName.c_str());
     if (mkdir_ret == 0)
     {
         // Directory made OK so return true
@@ -373,7 +373,7 @@ bool Foam::mkDir(const fileName& pathName, mode_t mode)
     }
     else
     {
-	printf("\tJust before switch(errno) in POSIX; errno = %d\n",errno);
+	// printf("\tJust before switch(errno) in POSIX; errno = %d\n",errno);
 	int myErrNo = errno;
         switch (errno)
         {
@@ -387,6 +387,7 @@ bool Foam::mkDir(const fileName& pathName, mode_t mode)
                 return false;
             }
 
+	    case 0:
             case EEXIST:
             {
                 // Directory already exists so simply return true
@@ -491,7 +492,7 @@ bool Foam::mkDir(const fileName& pathName, mode_t mode)
 
                 return false;
             }
-	    printf("\n\tJust before 'default:', errno: %d | myErrNo: \n",errno,myErrNo);
+	    // printf("\n\tJust before 'default:', errno: %d | myErrNo: \n",errno,myErrNo);
             default:
             {
                 FatalErrorInFunction
