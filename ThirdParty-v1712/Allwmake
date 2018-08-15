@@ -1,0 +1,292 @@
+#!/bin/sh
+#------------------------------------------------------------------------------
+# =========                 |
+# \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+#  \\    /   O peration     |
+#   \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+#    \\/     M anipulation  | Copyright (C) 2016-2017 OpenCFD Ltd.
+#------------------------------------------------------------------------------
+# License
+#     This file is part of OpenFOAM, licensed under GNU General Public License
+#     <http://www.gnu.org/licenses/>.
+#
+# Script
+#     Allwmake
+#
+# Description
+#     Build script for ThirdParty applications/libraries
+#
+# ----------------------------------------------
+# NO USER-CONFIGURABLE SETTINGS WITHIN THIS FILE
+#------------------------------------------------------------------------------
+# Run from third-party directory only
+cd ${0%/*} && wmakeCheckPwd "$WM_THIRD_PARTY_DIR" 2>/dev/null || {
+    echo "Error (${0##*/}) : not located in \$WM_THIRD_PARTY_DIR"
+    echo "    Check your OpenFOAM environment and installation"
+    exit 1
+}
+[ -n "$FOAM_EXT_LIBBIN" ] || {
+    echo "Error (${0##*/}) : \$FOAM_EXT_LIBBIN not set for ThirdParty"
+    echo "    Check your OpenFOAM environment and installation"
+    exit 1
+}
+. etc/tools/ThirdPartyFunctions
+#------------------------------------------------------------------------------
+# Compiler/linker settings for CMake/configure
+[ -n "$WM_CC" ]         &&  export CC="$WM_CC"
+[ -n "$WM_CXX" ]        &&  export CXX="$WM_CXX"
+[ -n "$WM_CFLAGS" ]     &&  export CFLAGS="$WM_CFLAGS"
+[ -n "$WM_CXXFLAGS" ]   &&  export CXXFLAGS="$WM_CXXFLAGS"
+[ -n "$WM_LDFLAGS" ]    &&  export LDFLAGS="$WM_LDFLAGS"
+
+useGccFlag $@           # Scan arguments for a '-gcc' option
+
+warnBuildIssues()
+{
+    echo
+    echo "    ---------------------------------------------------"
+    echo "    Optional component ($1) had build issues"
+    echo "    OpenFOAM will nonetheless remain largely functional"
+    echo "    ---------------------------------------------------"
+    echo
+}
+
+warnNotFound()
+{
+    echo "Optional component ($1) was not found"
+}
+
+#------------------------------------------------------------------------------
+
+echo
+echo ========================================
+echo Start ThirdParty Allwmake
+echo ========================================
+echo
+echo ========================================
+echo Build MPI libraries if required
+echo "    $MPI_ARCH_PATH"
+case "$WM_MPLIB" in
+(OPENMPI | MPICH)
+    ./make$WM_MPLIB -test "$MPI_ARCH_PATH" || ./make$WM_MPLIB
+    ;;
+esac
+
+
+#------------------------------------------------------------------------------
+# Building scotch on different platforms is still a bit of a pain
+
+# Get SCOTCH_VERSION, SCOTCH_ARCH_PATH
+if settings=$($WM_PROJECT_DIR/bin/foamEtcFile config.sh/scotch)
+then
+    . $settings
+else
+    echo
+    echo "Error: no config.sh/scotch settings"
+    echo
+fi
+
+echo
+echo ========================================
+echo "Scotch decomposition ($SCOTCH_VERSION)"
+echo "    $SCOTCH_ARCH_PATH"
+
+SCOTCH_SOURCE_DIR=$sourceBASE/$SCOTCH_VERSION
+
+# Needs generalizing, but works fairly well
+scotchMakefile=../../etc/makeFiles/scotch/Makefile.inc.i686_pc_linux2.shlib-OpenFOAM
+
+if [ -f $SCOTCH_ARCH_PATH/include/scotch.h \
+  -a -r $FOAM_EXT_LIBBIN/libscotch.so \
+  -a -r $FOAM_EXT_LIBBIN/libscotcherrexit.so ]
+then
+    echo "    scotch include: $SCOTCH_ARCH_PATH/include"
+    echo "    scotch library: $FOAM_EXT_LIBBIN"
+elif [ -d "$SCOTCH_SOURCE_DIR" ]
+then
+(
+    cd $SCOTCH_SOURCE_DIR/src || exit 1
+    export GIT_DIR=$SCOTCH_SOURCE_DIR/.git # Mask seeing our own git-repo
+    rm -rf $SCOTCH_ARCH_PATH
+
+    applyPatch $SCOTCH_VERSION ..       # patch at parent-level
+
+    prefixDIR=$SCOTCH_ARCH_PATH
+    incDIR=$SCOTCH_ARCH_PATH/include
+    libDIR=$FOAM_EXT_LIBBIN
+
+    mkdir -p $prefixDIR 2>/dev/null
+    mkdir -p $incDIR    2>/dev/null
+    mkdir -p $libDIR    2>/dev/null
+
+    if [ -f $scotchMakefile ]
+    then
+        rm -f Makefile.inc
+        ln -s $scotchMakefile Makefile.inc
+    fi
+    [ -f Makefile.inc ] || {
+        echo " Error: scotch needs an appropriate Makefile.inc"
+        exit 1
+    }
+
+    export CCS="${CC:-$WM_CC}"  # CCS (serial compiler)   default=$(CC)
+    export CCP=$(whichMpicc)    # CCP (parallel compiler) default=mpicc
+
+    # Consistency for Intel-MPI and non-icc compilers
+    [ -n "$I_MPI_CC" ] || export I_MPI_CC="${CC:-$WM_CC}"
+
+    make realclean 2>/dev/null  # Extra safety
+    make -j $WM_NCOMPPROCS scotch \
+     && make \
+        prefix=$prefixDIR \
+        includedir=$incDIR \
+        libdir=$libDIR \
+        install
+
+    make realclean 2>/dev/null || true      # Failed cleanup is uncritical
+) || warnBuildIssues SCOTCH
+else
+    warnNotFound SCOTCH
+fi
+
+# Build ptscotch if MPI (ThirdParty or system) is available
+# and normal scotch was built (has include and library)
+if [ "${FOAM_MPI:-dummy}" != dummy ] && \
+   [ -f $SCOTCH_ARCH_PATH/include/scotch.h \
+  -a -r $FOAM_EXT_LIBBIN/libscotch.so ] || \
+{
+    # Report that the above tests failed and pass-through the failure
+    echo
+    echo "    WARNING: skipping pt-scotch - no mpi or <scotch.h> not found"
+    false
+}
+then
+    echo
+    echo ========================================
+    echo "pt-scotch decomposition ($SCOTCH_VERSION with $FOAM_MPI)"
+    echo "    $SCOTCH_ARCH_PATH"
+
+    if [ -f $SCOTCH_ARCH_PATH/include/$FOAM_MPI/ptscotch.h \
+      -a -r $FOAM_EXT_LIBBIN/$FOAM_MPI/libptscotch.so \
+      -a -r $FOAM_EXT_LIBBIN/$FOAM_MPI/libptscotcherrexit.so ]
+    then
+        echo "    ptscotch include: $SCOTCH_ARCH_PATH/include/$FOAM_MPI"
+        echo "    ptscotch library: $FOAM_EXT_LIBBIN/$FOAM_MPI"
+    else
+    (
+        cd $SCOTCH_SOURCE_DIR/src || exit 1
+        export GIT_DIR=$SCOTCH_SOURCE_DIR/.git # Mask seeing our own git-repo
+        echo
+
+        prefixDIR=$SCOTCH_ARCH_PATH
+        incDIR=$SCOTCH_ARCH_PATH/include/$FOAM_MPI
+        libDIR=$FOAM_EXT_LIBBIN/$FOAM_MPI
+
+        mkdir -p $prefixDIR 2>/dev/null
+        mkdir -p $incDIR    2>/dev/null
+        mkdir -p $libDIR    2>/dev/null
+
+        if [ -f $scotchMakefile ]
+        then
+            rm -f Makefile.inc
+            ln -s $scotchMakefile Makefile.inc
+        fi
+        [ -f Makefile.inc ] || {
+            echo " Error: ptscotch needs an appropriate Makefile.inc"
+            exit 1
+        }
+
+        export CCS="${CC:-$WM_CC}"  # CCS (serial compiler)   default=$(CC)
+        export CCP=$(whichMpicc)    # CCP (parallel compiler) default=mpicc
+
+        # Consistency for Intel-MPI and non-icc compilers
+        [ -n "$I_MPI_CC" ] || export I_MPI_CC="${CC:-$WM_CC}"
+
+        make realclean 2>/dev/null  # Extra safety
+        make -j $WM_NCOMPPROCS ptscotch \
+         && make \
+            prefix=$prefixDIR \
+            includedir=$incDIR \
+            libdir=$libDIR \
+            install
+
+        make realclean 2>/dev/null || true  # Failed cleanup is uncritical
+    ) || warnBuildIssues PTSCOTCH
+    fi
+
+    # Verify existence of ptscotch include
+    [ -f $SCOTCH_ARCH_PATH/include/$FOAM_MPI/ptscotch.h ] || {
+        echo
+        echo "    WARNING: required include file 'ptscotch.h' not found!"
+    }
+fi
+
+# Could now remove $SCOTCH_SOURCE_DIR/src/Makefile.inc
+
+
+#------------------------------------------------------------------------------
+
+echo
+echo ========================================
+# Get KAHIP_ARCH_PATH
+if settings=$($WM_PROJECT_DIR/bin/foamEtcFile config.sh/kahip)
+then
+    . $settings
+fi
+if [ -n "$KAHIP_ARCH_PATH" ]
+then
+    echo KaHIP decomposition
+    ./makeKAHIP -test "$KAHIP_ARCH_PATH" || \
+    ./makeKAHIP || warnBuildIssues KAHIP
+else
+    warnNotFound KAHIP   # METIS is optional
+fi
+
+#------------------------------------------------------------------------------
+echo
+echo ========================================
+
+# Get METIS_ARCH_PATH
+if settings=$($WM_PROJECT_DIR/bin/foamEtcFile config.sh/metis)
+then
+    . $settings
+fi
+if [ -n "$METIS_ARCH_PATH" ]
+then
+    echo Metis decomposition
+    ./makeMETIS -test "$METIS_ARCH_PATH" || \
+    ./makeMETIS || warnBuildIssues METIS
+else
+    warnNotFound METIS   # METIS is optional
+fi
+
+#------------------------------------------------------------------------------
+echo
+echo ========================================
+if [ -n "$CGAL_ARCH_PATH" ]
+then
+    echo "CGAL/boost"
+    ./makeCGAL -test "$CGAL_ARCH_PATH" "$BOOST_ARCH_PATH" || \
+    ./makeCGAL || warnBuildIssues CGAL
+else
+    warnNotFound CGAL   # CGAL is optional
+fi
+
+echo
+echo ========================================
+if [ -n "$FFTW_ARCH_PATH" ]
+then
+    echo FFTW
+    ./makeFFTW -test "$FFTW_ARCH_PATH" || \
+    ./makeFFTW || warnBuildIssues FFTW
+else
+    warnNotFound FFTW   # FFTW is optional
+fi
+
+echo
+echo ========================================
+echo Done ThirdParty Allwmake
+echo ========================================
+echo
+
+#------------------------------------------------------------------------------

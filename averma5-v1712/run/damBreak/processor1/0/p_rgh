@@ -25,8 +25,8 @@ boundaryField
     leftWall
     {
         type            fixedFluxPressure;
-        gradient        uniform 0;
-        value           uniform 0;
+        gradient        nonuniform 0();
+        value           nonuniform 0();
     }
     rightWall
     {
@@ -37,8 +37,8 @@ boundaryField
     lowerWall
     {
         type            fixedFluxPressure;
-        gradient        nonuniform 0();
-        value           nonuniform 0();
+        gradient        uniform 0;
+        value           uniform 0;
     }
     atmosphere
     {
@@ -46,14 +46,19 @@ boundaryField
         rho             rho;
         psi             none;
         gamma           1;
-        p0              uniform 0;
-        value           uniform 0;
+        p0              nonuniform 0();
+        value           nonuniform 0();
     }
     defaultFaces
     {
         type            empty;
     }
     procBoundary1to0
+    {
+        type            processor;
+        value           uniform 0;
+    }
+    procBoundary1to3
     {
         type            processor;
         value           uniform 0;

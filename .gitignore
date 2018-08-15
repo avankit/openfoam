@@ -23,8 +23,8 @@
 # Derived files
 lex.yy.c
 
-# Corefiles
-core
+# Corefiles (letting these in the index, since some vtk/ files went missing and didn't allow for OF to be built elsewhere)
+# core
 
 # Dependency files - anywhere
 *.dep
@@ -32,20 +32,20 @@ core
 # lnInclude (symlink) directories - anywhere
 lnInclude
 
-# Build directories - anywhere
-linux*Clang*/
-linux*Gcc*/
-linux*Icc*/
-solaris*Gcc*/
-SunOS*Gcc*/
+# Build directories - anywhere (letting the linux64Gcc/* files sync, with updated compilers, flags etc.)
+# linux*Clang*/
+# linux*Gcc*/
+# linux*Icc*/
+# solaris*Gcc*/
+# SunOS*Gcc*/
 platforms/
 
 # Top-level build directories
 /OpenFOAM-v1712/build/
 /OpenFOAM-v1712/platforms/
 
-# Third-party apps
-/ThirdParty-v1712/
+# Third-party apps; adding these now to github, so everything can be synced
+# /ThirdParty-v1712/
 
 # ignoring modules/avalanche to get rid of a fatal error
 /OpenFOAM-v1712/modules/

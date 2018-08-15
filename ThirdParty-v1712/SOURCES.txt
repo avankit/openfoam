@@ -1,0 +1,69 @@
+Short summary of third-party software versions for recent OpenFOAM versions.
+
+OpenFOAM-1712
+---------------
+CGAL-4.9.1
+ParaView-5.4.1      *minor*
+boost_1_64_0
+fftw-3.3.7          *minor*
+openmpi-1.10.4
+scotch_6.0.3
+kahip-2.00d         *new*
+
+
+OpenFOAM-1706
+---------------
+CGAL-4.9.1          *minor*
+ParaView-5.4.0      *update*
+boost_1_64_0        *update*
+fftw-3.3.6-pl1      *minor*
+openmpi-1.10.4
+scotch_6.0.3
+
+
+OpenFOAM-1612
+---------------
+CGAL-4.9            *update*
+ParaView-5.0.1      *update*
+boost_1_62_0        *update*
+fftw-3.3.5          *minor*
+openmpi-1.10.4      *minor*
+scotch_6.0.3
+
+
+OpenFOAM-1606
+---------------
+CGAL-4.8            *update*
+ParaView-5.0.1      *update*
+boost_1_61_0        *new*
+fftw-3.3.4          *new*
+openmpi-1.10.2      *minor*
+scotch_6.0.3
+
+
+OpenFOAM-v3.0+
+---------------
+CGAL-4.7            *update*
+ParaView-4.4.0      *update*
+openmpi-1.10.0      *update*
+scotch_6.0.3
+
+
+OpenFOAM-v2.4
+---------------
+CGAL-4.6            *update*
+ParaView-4.1.0
+openmpi-1.8.5       *update*
+scotch_6.0.3        *update*
+
+
+---------------
+OpenFOAM-v2.3
+---------------
+CGAL-4.3
+ParaView-4.1.0
+openmpi-1.6.5
+scotch_6.0.0
+
+
+---------------

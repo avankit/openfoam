@@ -1,0 +1,154 @@
+#!/bin/sh
+#------------------------------------------------------------------------------
+# =========                 |
+# \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+#  \\    /   O peration     |
+#   \\  /    A nd           | Copyright (C) 2016-2017 OpenCFD Ltd.
+#    \\/     M anipulation  |
+#------------------------------------------------------------------------------
+# License
+#     This file is part of OpenFOAM, licensed under GNU General Public License
+#     <http://www.gnu.org/licenses/>.
+#
+# Script
+#     makeFFTW
+#
+# Description
+#     Build script for FFTW
+#
+# ----------------------------------------------
+# NO USER-CONFIGURABLE SETTINGS WITHIN THIS FILE
+#------------------------------------------------------------------------------
+# Short-circuit test for an installation
+if [ "$1" = "-test" ]
+then
+    [ "$#" -eq 2 ] || { echo "${0##*/} -test : needs 1 argument"; exit 1; }
+    dir="$2" # <- FFTW_ARCH_PATH
+    if [ -d "$dir/include" -a -r "$dir/lib$WM_COMPILER_LIB_ARCH/libfftw3.so" ]
+    then
+        echo "    fftw include: $dir/include"
+        echo "    fftw library: $dir/lib$WM_COMPILER_LIB_ARCH"
+        exit 0
+    else
+        exit 2
+    fi
+fi
+#------------------------------------------------------------------------------
+# Run from third-party directory only
+cd ${0%/*} && wmakeCheckPwd "$WM_THIRD_PARTY_DIR" 2>/dev/null || {
+    echo "Error (${0##*/}) : not located in \$WM_THIRD_PARTY_DIR"
+    echo "    Check your OpenFOAM environment and installation"
+    exit 1
+}
+. etc/tools/ThirdPartyFunctions
+#------------------------------------------------------------------------------
+
+# FFTW version from OpenFOAM etc/config.sh file:
+_foamEtc config.sh/FFTW
+
+fftwPACKAGE=${fftw_version:-fftw-system}
+
+#------------------------------------------------------------------------------
+usage() {
+    exec 1>&2
+    while [ "$#" -ge 1 ]; do echo "$1"; shift; done
+    cat<<USAGE
+
+usage: ${0##*/} [OPTION] [fftw-VERSION]
+options:
+  -gcc              Force gcc/g++ instead of the values from \$WM_CC, \$WM_CXX
+  -help
+
+* build FFTW with
+      ${fftwPACKAGE:-'unspecified FFTW version'}
+
+USAGE
+    exit 1
+}
+#------------------------------------------------------------------------------
+# Compiler settings for CMake/configure
+[ -n "$WM_CC" ]  && export CC="$WM_CC"
+[ -n "$WM_CXX" ] && export CXX="$WM_CXX"
+
+# Parse options
+while [ "$#" -gt 0 ]
+do
+    case "$1" in
+    '') ;;      # Ignore empty
+    -h | -help) usage   ;;
+    -gcc)       useGcc  ;;
+
+    fftw-[0-9]* | fftw_[0-9]* | fftw-system )
+        fftwPACKAGE="${1%%/}"
+        ;;
+    *)
+        die "unknown option/argument: '$1'"
+        ;;
+    esac
+    shift
+done
+
+[ -n "$fftwPACKAGE" ] || die "The fftw-VERSION was not specified"
+
+# Nothing to build
+if _foamIsNone "$fftwPACKAGE"
+then
+    echo "Using fftw-none (skip ThirdParty build of FFTW)"
+    exit 0
+elif _foamIsSystem "$fftwPACKAGE"
+then
+    echo "Using fftw-system (skip ThirdParty build of FFTW)"
+    exit 0
+fi
+
+#------------------------------------------------------------------------------
+#
+# Build FFTW
+# For 64-bit
+# - FFTW itself will normally build into 'lib64',
+#   but provide --libdir on configure to be 100% certain
+# - Third-Party builds into 'lib64'
+# - system is normally built into 'lib64'
+#
+#   FFTW_SOURCE_DIR : location of the original sources
+#   FFTW_ARCH_PATH  : installation directory
+
+FFTW_SOURCE_DIR=$sourceBASE/$fftwPACKAGE
+FFTW_ARCH_PATH=$installBASE/$fftwPACKAGE
+
+if [ -r "$FFTW_ARCH_PATH/lib$WM_COMPILER_LIB_ARCH/libfftw3.so" ]
+then
+    echo "Already has FFTW shared library"
+else
+    echo "Starting build: FFTW ($fftwPACKAGE)"
+    echo
+
+    (
+        buildDIR=$buildBASE/$fftwPACKAGE
+
+        cd $FFTW_SOURCE_DIR || exit 1
+        export GIT_DIR=$PWD/.git # Mask seeing our own git-repo
+
+        rm -rf $FFTW_ARCH_PATH
+        rm -rf $buildDIR
+        mkdir -p $buildDIR
+        cd $buildDIR
+
+        set -x
+        $FFTW_SOURCE_DIR/configure \
+            --prefix=$FFTW_ARCH_PATH \
+            --libdir=$FFTW_ARCH_PATH/lib$WM_COMPILER_LIB_ARCH \
+            --enable-shared --disable-static \
+            --disable-fortran \
+        && set +x \
+        && make -j $WM_NCOMPPROCS \
+        && make install \
+        && echo "Built $fftwPACKAGE" \
+        && pkgconfigAdjust $FFTW_ARCH_PATH
+    ) || {
+        echo "Error building: FFTW"
+        exit 1
+    }
+fi
+
+#------------------------------------------------------------------------------

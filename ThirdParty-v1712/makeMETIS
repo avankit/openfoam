@@ -1,0 +1,189 @@
+#!/bin/sh
+#------------------------------------------------------------------------------
+# =========                 |
+# \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+#  \\    /   O peration     |
+#   \\  /    A nd           | Copyright (C) 2017 OpenCFD Ltd.
+#    \\/     M anipulation  |
+#------------------------------------------------------------------------------
+# License
+#     This file is part of OpenFOAM, licensed under GNU General Public License
+#     <http://www.gnu.org/licenses/>.
+#
+# Script
+#     makeMETIS
+#
+# Description
+#     Build script for METIS
+#
+# ----------------------------------------------
+# NO USER-CONFIGURABLE SETTINGS WITHIN THIS FILE
+#------------------------------------------------------------------------------
+# Short-circuit test for an installation
+if [ "$1" = "-test" ]
+then
+    [ "$#" -eq 2 ] || { echo "${0##*/} -test : needs 1 argument"; exit 1; }
+    dir="$2" # <- METIS_ARCH_PATH
+    if [ -d "$dir/include" ]
+    then
+        for lib in \
+            $FOAM_EXT_LIBBIN/libmetis.so \
+            $dir/lib/libmetis.a \
+            $dir/lib/libmetis.so \
+            $dir/lib$WM_COMPILER_LIB_ARCH/libmetis.a \
+            $dir/lib$WM_COMPILER_LIB_ARCH/libmetis.so \
+            ;
+        do
+            if [ -r "$lib" ]
+            then
+                echo "    metis include: $dir/include"
+                echo "    metis library: ${lib%/*}"
+                exit 0
+            fi
+        done
+    fi
+    exit 2
+fi
+#------------------------------------------------------------------------------
+# Run from third-party directory only
+cd ${0%/*} && wmakeCheckPwd "$WM_THIRD_PARTY_DIR" 2>/dev/null || {
+    echo "Error (${0##*/}) : not located in \$WM_THIRD_PARTY_DIR"
+    echo "    Check your OpenFOAM environment and installation"
+    exit 1
+}
+[ -n "$FOAM_EXT_LIBBIN" ] || {
+    echo "Error (${0##*/}) : \$FOAM_EXT_LIBBIN not set"
+    echo "    Check your OpenFOAM environment and installation"
+    exit 1
+}
+. etc/tools/ThirdPartyFunctions
+#------------------------------------------------------------------------------
+_foamEtc config.sh/metis
+
+metisPACKAGE=${METIS_VERSION:-metis-system}
+targetType=libso
+
+#------------------------------------------------------------------------------
+usage() {
+    exec 1>&2
+    while [ "$#" -ge 1 ]; do echo "$1"; shift; done
+    cat<<USAGE
+
+usage: ${0##*/} [OPTION] [lib|libso] [METIS-VERSION]
+options:
+  -gcc              Force gcc/g++ instead of the values from \$WM_CC, \$WM_CXX
+  -help
+
+* build METIS with
+      ${metisPACKAGE:-'unspecified metis version'}
+
+USAGE
+    exit 1
+}
+#------------------------------------------------------------------------------
+# Compiler settings for CMake/configure
+[ -n "$WM_CC" ]  && export CC="$WM_CC"
+[ -n "$WM_CXX" ] && export CXX="$WM_CXX"
+
+# Parse options
+while [ "$#" -gt 0 ]
+do
+    case "$1" in
+    '') ;;      # Ignore empty
+    -h | -help) usage   ;;
+    -gcc)       useGcc  ;;
+
+    lib|libso)
+        targetType="$1"
+        ;;
+
+    metis-[0-9]*)
+        metisPACKAGE="${1%%/}"
+        unset METIS_ARCH_PATH  # Avoid inconsistency
+        ;;
+    *)
+        die "unknown option/argument: '$1'"
+        ;;
+    esac
+    shift
+done
+
+[ -n "$metisPACKAGE" ] || die "The metis-VERSION was not specified"
+
+# Nothing to build
+if _foamIsNone $metisPACKAGE
+then
+    echo "Using metis-none (skip ThirdParty build of METIS)"
+    exit 0
+elif _foamIsSystem $metisPACKAGE
+then
+    echo "Using metis-system"
+    exit 0
+fi
+
+#------------------------------------------------------------------------------
+#
+# Build METIS
+#
+#   METIS_ARCH_PATH  : installation directory
+#   METIS_SOURCE_DIR : location of the original sources
+
+METIS_SOURCE_DIR=$sourceBASE/$metisPACKAGE
+: ${METIS_ARCH_PATH:=$installBASE$WM_PRECISION_OPTION$WM_LABEL_OPTION/$metisPACKAGE}
+
+[ -d "$METIS_SOURCE_DIR" ] || {
+    echo "Missing sources: '$metisPACKAGE'"
+    exit 1
+}
+
+#
+# Manual installation (of library)
+#
+install()
+{
+    local libdir=$METIS_ARCH_PATH/lib
+
+    if [ "$targetType" = libso ]
+    then
+        \mv $libdir/libmetis.so $FOAM_EXT_LIBBIN
+        rmdir $libdir 2>/dev/null # Failed rmdir is uncritical
+
+        echo "Installing: $FOAM_EXT_LIBBIN/libmetis.so"
+    fi
+    return 0
+}
+
+echo "Starting build: $metisPACKAGE ($targetType)"
+echo
+(
+    # Configuration options:
+    unset configOpt
+    if [ "$targetType" = libso ]
+    then
+        configOpt="shared=1"
+    fi
+
+    cd $METIS_SOURCE_DIR || exit 1
+    export GIT_DIR=$PWD/.git # Mask seeing our own git-repo
+
+    rm -rf $METIS_ARCH_PATH
+    rm -f $FOAM_EXT_LIBBIN/libmetis.so
+
+    # Adjust metis integer size to match OpenFOAM label-size
+    sed -i -e 's=\(#define IDXTYPEWIDTH\).*=\1 '$WM_LABEL_SIZE'=' \
+        include/metis.h
+
+    # No config option for the library location.
+    # - build normally and use mv to relocate it
+
+    make config $configOpt prefix=$METIS_ARCH_PATH \
+    && make -j $WM_NCOMPPROCS install \
+    && echo "Built: metis" \
+    && install
+) || {
+    echo "Error building: metis"
+    exit 1
+}
+
+
+#------------------------------------------------------------------------------

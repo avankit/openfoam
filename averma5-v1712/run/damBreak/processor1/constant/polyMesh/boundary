@@ -15,52 +15,63 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-6
+7
 (
     leftWall
     {
         type            wall;
         inGroups        1(wall);
-        nFaces          24;
-        startFace       2197;
+        nFaces          0;
+        startFace       3731;
     }
     rightWall
     {
         type            wall;
         inGroups        1(wall);
-        nFaces          25;
-        startFace       2221;
+        nFaces          43;
+        startFace       3731;
     }
     lowerWall
     {
         type            wall;
         inGroups        1(wall);
-        nFaces          0;
-        startFace       2246;
+        nFaces          66;
+        startFace       3774;
     }
     atmosphere
     {
         type            patch;
-        nFaces          46;
-        startFace       2246;
+        nFaces          0;
+        startFace       3840;
     }
     defaultFaces
     {
         type            empty;
         inGroups        1(empty);
-        nFaces          2268;
-        startFace       2292;
+        nFaces          3830;
+        startFace       3840;
     }
     procBoundary1to0
     {
         type            processor;
         inGroups        1(processor);
-        nFaces          47;
-        startFace       4560;
+        nFaces          44;
+        startFace       7670;
         matchTolerance  0.0001;
         transform       unknown;
         myProcNo        1;
         neighbProcNo    0;
+    }
+    procBoundary1to3
+    {
+        type            processor;
+        inGroups        1(processor);
+        nFaces          45;
+        startFace       7714;
+        matchTolerance  0.0001;
+        transform       unknown;
+        myProcNo        1;
+        neighbProcNo    3;
     }
 )
 

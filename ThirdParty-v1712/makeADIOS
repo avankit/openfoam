@@ -1,0 +1,362 @@
+#!/bin/sh
+#------------------------------------------------------------------------------
+# =========                 |
+# \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+#  \\    /   O peration     |
+#   \\  /    A nd           | Copyright (C) 2016-2017 OpenCFD Ltd.
+#    \\/     M anipulation  |
+#------------------------------------------------------------------------------
+# License
+#     This file is part of OpenFOAM, licensed under GNU General Public License
+#     <http://www.gnu.org/licenses/>.
+#
+# Script
+#     makeADIOS
+#
+# Description
+#     Build script for ADIOS
+#
+# ----------------------------------------------
+# NO USER-CONFIGURABLE SETTINGS WITHIN THIS FILE
+#------------------------------------------------------------------------------
+# Run from third-party directory only
+cd ${0%/*} && wmakeCheckPwd "$WM_THIRD_PARTY_DIR" 2>/dev/null || {
+    echo "Error (${0##*/}) : not located in \$WM_THIRD_PARTY_DIR"
+    echo "    Check your OpenFOAM environment and installation"
+    exit 1
+}
+. etc/tools/ThirdPartyFunctions
+#------------------------------------------------------------------------------
+
+# ADIOS version from OpenFOAM etc/config.sh file:
+_foamEtc config.sh/ADIOS
+
+adiosPACKAGE=${adios_version:-adios-none}
+
+#------------------------------------------------------------------------------
+usage() {
+    exec 1>&2
+    while [ "$#" -ge 1 ]; do echo "$1"; shift; done
+    cat<<USAGE
+
+usage: ${0##*/} [OPTION] [adios-VERSION] [-- configure-options]
+options:
+  -cmake PATH       With cmake from the path given
+  -gcc              Force gcc/g++ instead of the values from \$WM_CC, \$WM_CXX
+  -help
+
+* Build ADIOS
+      $adiosPACKAGE
+
+USAGE
+    exit 1
+}
+#------------------------------------------------------------------------------
+# Compiler settings for CMake/configure
+[ -n "$WM_CC" ]         &&  export CC="$WM_CC"
+[ -n "$WM_CXX" ]        &&  export CXX="$WM_CXX"
+[ -n "$WM_CFLAGS" ]     &&  export CFLAGS="$WM_CFLAGS"
+[ -n "$WM_CXXFLAGS" ]   &&  export CXXFLAGS="$WM_CXXFLAGS"
+
+# Parse options
+while [ "$#" -gt 0 ]
+do
+    case "$1" in
+    '') ;;      # Ignore empty
+    --) break;; # Extra configure options (leave on $@ for later detection)
+    -h | -help) usage   ;;
+    -gcc)       useGcc  ;;
+
+    -cmake)
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        CMAKE_PATH="${2%%/}"
+        shift
+        ;;
+    ADIOS-[1-9]* | adios-[1-9]* | ADIOS-git* | adios-git*)
+        adiosPACKAGE="${1%%/}"
+        ;;
+
+    *)
+        die "unknown option/argument: '$1'"
+        ;;
+    esac
+    shift
+done
+
+[ -n "$adiosPACKAGE" ] || die "The adios-VERSION was not specified"
+
+# Nothing to build
+if _foamIsNone "$adiosPACKAGE"
+then
+    echo "Using adios-none (skip ThirdParty build of ADIOS)"
+    exit 0
+elif _foamIsSystem "$adiosPACKAGE"
+then
+    echo "Using adios-system"
+    exit 0
+fi
+
+#------------------------------------------------------------------------------
+#
+# Build ADIOS
+#   ADIOS_SOURCE_DIR : location of the original sources
+#   ADIOS_ARCH_PATH  : installation directory
+
+ADIOS_SOURCE_DIR=$sourceBASE/$adiosPACKAGE
+ADIOS_ARCH_PATH=$installBASE/$adiosPACKAGE
+
+: ${FOAM_MPI:=dummy}
+
+echo
+echo ========================================
+echo "Build adios library $adiosPACKAGE for $FOAM_MPI"
+echo
+
+
+#
+# Manual adjustments to adios config
+#
+adjustADIOS()
+{
+    # Rename libraries according to FOAM_MPI
+    (
+        cd $ADIOS_ARCH_PATH/lib$WM_COMPILER_LIB_ARCH || exit 1
+
+        if [ "$FOAM_MPI" != dummy ]
+        then
+            \mv -f libadios.a       libadios_$FOAM_MPI.a
+            \mv -f libadiosread.a   libadiosread_$FOAM_MPI.a
+        fi
+        \mv -f libadios_nompi.a     libadios_dummy.a
+        \mv -f libadiosread_nompi.a libadiosread_dummy.a
+
+        echo
+        echo "ADIOS library renamed to libadios_$FOAM_MPI"
+        echo
+    )
+
+    # We don't need/use XML things
+    \rm -f $ADIOS_ARCH_PATH/bin/adios_lint
+
+    # Replace resolved paths with variables
+    echo "Adjust prefix for ADIOS"
+    for i in \
+        $ADIOS_ARCH_PATH/bin/adios_config \
+        $ADIOS_ARCH_PATH/etc/adios_config.flags \
+    ;
+    do
+        [ -f "$i" ] || {
+            echo "    no such file - '$i'"
+            continue
+        }
+        if sed -i -e 's|'"$WM_THIRD_PARTY_DIR"'|$WM_THIRD_PARTY_DIR|g' $i
+        then
+            echo "    '$i'"
+        else
+            echo "    problems with '$i'"
+        fi
+    done
+
+    # Adjust the config flags file:
+    # * Remove references to Fortran libraries (disabled in configure)
+    # * Remove references to deprecated version 1 API
+    # * Cleanup excessive whitespace
+    # * Handle renamed libraries:
+    #   - libadios       -> libadios_$FOAM_MPI
+    #   - libadios_nompi -> libadios_dummy
+    #
+    echo "Adjust library names for ADIOS"
+    for i in \
+        $ADIOS_ARCH_PATH/etc/adios_config.flags \
+    ;
+    do
+        [ -f "$i" ] || {
+            echo "    no such file - '$i'"
+            continue
+        }
+
+        if sed -i \
+            -e '/_FLIB=/d' \
+            -e '/_V1_INC=/d' \
+            -e 's|  *| |g' \
+            -e 's|\(-ladios[a-z]*_\)nompi |\1dummy |g' \
+            $i
+        then
+            echo "    '$i'"
+        else
+            echo "    problems with '$i'"
+        fi
+
+        if [ "$FOAM_MPI" != dummy ]
+        then
+            sed -i -e 's|\(-ladios[a-z]*\) |\1_'"$FOAM_MPI |g" $i || \
+            echo "    problems with '$i'"
+        fi
+    done
+}
+
+#
+# List ADIOS methods/configuration
+#
+listMethods()
+{
+    [ -f $ADIOS_ARCH_PATH/bin/adios_config ] || {
+        echo "Warning: no adios_config"
+        return 1
+    }
+
+    echo "==============="
+
+    # May have problems listing parallel methods (eg, transport key missing)
+    if $ADIOS_ARCH_PATH/bin/adios_config -m >/dev/null 2>&1
+    then
+        $ADIOS_ARCH_PATH/bin/adios_config -m 2>/dev/null
+    else
+        echo "Warning: could not list parallel methods"
+        # Fallback to serial methods
+        $ADIOS_ARCH_PATH/bin/adios_config -s -m 2>/dev/null
+    fi || echo "Warning: could not list configured methods"
+    echo "==============="
+
+}
+
+
+# Needs future adjustment
+# - for shared library
+# - for mpi-specific library locations
+if [ -f $ADIOS_ARCH_PATH/include/adios.h \
+  -a -r $ADIOS_ARCH_PATH/lib$WM_COMPILER_LIB_ARCH/libadios_${FOAM_MPI}.a ]
+then
+    echo "    ADIOS header in $ADIOS_ARCH_PATH/include"
+    ### echo "    ADIOS libs   in $FOAM_EXT_LIBBIN"           # dynamic
+    echo "    ADIOS libs   in $ADIOS_ARCH_PATH/lib$WM_COMPILER_LIB_ARCH" # static
+    listMethods
+elif [ -z "$CMAKE_PATH" ]
+then
+    echo "Starting build: $adiosPACKAGE (using configure)"
+    echo
+    (
+        # Configuration options:
+        unset configOpt
+
+        # Add InfiniBand support
+        ibDir=/usr/local/ofed
+        if [ -d "$ibDir" -a "$FOAM_MPI" != dummy ]
+        then
+            configOpt="$configOpt --with-infiniband=$ibDir"
+        fi
+
+        # Transport layers
+        if [ -f /usr/include/bzlib.h ]
+        then
+            configOpt="$configOpt --with-bzip2"
+        fi
+
+        if [ -f /usr/include/zlib.h ]
+        then
+            configOpt="$configOpt --with-zlib"
+        fi
+
+        # Other types of support
+        ## configOpt="$configOpt --with-hdf5=..."
+        ## configOpt="$configOpt --with-lustre=..."
+        ## configOpt="$configOpt --enable-research-transports"
+
+        # Additional configure options
+        if [ "$1" = "--" ]
+        then
+            shift
+            configOpt="$configOpt $@"
+        fi
+
+        # End of configuration options
+        # ----------------------------
+        buildDIR=$buildBASE/$adiosPACKAGE
+
+        cd $ADIOS_SOURCE_DIR || exit 1
+        export GIT_DIR=$PWD/.git # Mask seeing our own git-repo
+
+        [ -e Makefile ] && make distclean 2>/dev/null
+
+        applyPatch $adiosPACKAGE $ADIOS_SOURCE_DIR
+
+        # Remove any existing build folder and recreate
+        rm -rf $ADIOS_ARCH_DIR
+        rm -rf $buildDIR 2>/dev/null
+        mkdir -p $buildDIR
+
+        [ -f configure ] || {
+            echo "no configure for $adiosPACKAGE ... trying autogen"
+            ./autogen.sh
+        }
+
+        # May not work properly with FOAM_MPI = dummy
+        if [ "$FOAM_MPI" = dummy ]
+        then
+            configOpt="$configOpt --without-mpi"
+        else
+            CC=mpicc
+            CXX=mpicxx
+        fi
+
+        # Install into lib64/
+        cd $buildDIR && $ADIOS_SOURCE_DIR/configure \
+            --prefix=$ADIOS_ARCH_PATH \
+            --libdir=$ADIOS_ARCH_PATH/lib$WM_COMPILER_LIB_ARCH \
+            --disable-fortran \
+            --with-pic \
+            --without-fastbit \
+            $configOpt \
+        && make -j $WM_NCOMPPROCS all \
+        && make install \
+        && echo "Built: $adiosPACKAGE" \
+        && adjustADIOS \
+        && listMethods
+    ) || {
+        echo "Error building: $adiosPACKAGE"
+    }
+else
+    # CMake options often lag the configure ones
+    echo "Starting build: $adiosPACKAGE (using cmake)"
+    echo
+    (
+        buildDIR=$buildBASE/$adiosPACKAGE
+        cd $ADIOS_SOURCE_DIR || exit 1
+        export GIT_DIR=$PWD/.git # Mask seeing our own git-repo
+
+        applyPatch $adiosPACKAGE $ADIOS_SOURCE_DIR
+
+        # Remove any existing build folder and recreate
+        rm -rf $ADIOS_ARCH_DIR
+        rm -rf $buildDIR 2>/dev/null
+        mkdir -p $buildDIR
+
+        # May not work properly with FOAM_MPI = dummy
+        if [ "$FOAM_MPI" = dummy ]
+        then
+            configOpt="$configOpt --without-mpi"
+        else
+            CC=mpicc
+            CXX=mpicxx
+        fi
+
+        cmake=$(findCMake)
+
+        # Install into lib64/
+        cd $buildDIR && $cmake \
+            -DCMAKE_INSTALL_PREFIX=$ADIOS_ARCH_PATH \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_FORTRAN=FALSE \
+            ${WM_QUIET:+-DCMAKE_RULE_MESSAGES=OFF} \
+            $ADIOS_SOURCE_DIR \
+        && make -j $WM_NCOMPPROCS all \
+        && make install \
+        && echo "Built: $adiosPACKAGE" \
+        && adjustADIOS \
+        && listMethods
+    ) || {
+        echo "Error building: $adiosPACKAGE"
+    }
+fi
+
+# -----------------------------------------------------------------------------

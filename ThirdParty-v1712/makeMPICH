@@ -1,0 +1,178 @@
+#!/bin/sh
+#------------------------------------------------------------------------------
+# =========                 |
+# \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+#  \\    /   O peration     |
+#   \\  /    A nd           | Copyright (C) 2017 OpenCFD Ltd.
+#    \\/     M anipulation  |
+#------------------------------------------------------------------------------
+# License
+#     This file is part of OpenFOAM, licensed under GNU General Public License
+#     <http://www.gnu.org/licenses/>.
+#
+# Script
+#     makeMPICH
+#
+# Description
+#     Build script for mpich - legacy (unmaintained) build code!
+#
+# ----------------------------------------------
+# NO USER-CONFIGURABLE SETTINGS WITHIN THIS FILE
+#------------------------------------------------------------------------------
+# Short-circuit test for an installation
+if [ "$1" = "-test" ]
+then
+    [ "$#" -eq 2 ] || { echo "${0##*/} -test : needs 1 argument"; exit 1; }
+    dir="$2" # <- MPI_ARCH_PATH
+    if [ -r "$dir/lib$WM_COMPILER_LIB_ARCH/libmpich.so" ]
+    then
+        echo "Have mpich shared library (${dir##*/})"
+        exit 0
+    elif [ -r "$dir/lib$WM_COMPILER_LIB_ARCH/libmpich.a" ]
+    then
+        echo "Have mpich static library (${dir##*/})"
+        exit 0
+    else
+        echo "No mpich libraries found: ${dir:-not-specified}"
+        exit 2
+    fi
+fi
+#------------------------------------------------------------------------------
+# Run from third-party directory only
+cd ${0%/*} && wmakeCheckPwd "$WM_THIRD_PARTY_DIR" 2>/dev/null || {
+    echo "Error (${0##*/}) : not located in \$WM_THIRD_PARTY_DIR"
+    echo "    Check your OpenFOAM environment and installation"
+    exit 1
+}
+. etc/tools/ThirdPartyFunctions
+# Transition
+# ~~~~~~~~~~
+_foamAddLib()  { true; }
+_foamAddMan()  { true; }
+_foamAddPath() { true; }
+#------------------------------------------------------------------------------
+
+WM_MPLIB=MPICH                                  # Ensure we get the correct MPI
+
+# mpich version from OpenFOAM etc/config.sh file:
+_foamEtc config.sh/mpi
+
+mpiPACKAGE=${FOAM_MPI:-mpich-system}
+
+#------------------------------------------------------------------------------
+usage() {
+    exec 1>&2
+    while [ "$#" -ge 1 ]; do echo "$1"; shift; done
+    cat<<USAGE
+
+usage: ${0##*/} [OPTION] [mpich-VERSION] [-- configure-options]
+options:
+  -gcc              force gcc/g++ instead of the values from \$WM_CC, \$WM_CXX
+  -help
+
+* build mpich with
+      ${mpiPACKAGE:-'unspecified mpich version'}
+
+USAGE
+    exit 1
+}
+#------------------------------------------------------------------------------
+# Compiler settings for CMake/configure
+[ -n "$WM_CC" ]  && export CC="$WM_CC"
+[ -n "$WM_CXX" ] && export CXX="$WM_CXX"
+
+# Parse options
+while [ "$#" -gt 0 ]
+do
+    case "$1" in
+    '') ;;      # Ignore empty
+    --) break;; # Extra configure options (leave on $@ for later detection)
+    -h | -help) usage   ;;
+    -gcc)       useGcc  ;;
+
+    mpich*)
+        mpiPACKAGE="${1%%/}"
+        ;;
+
+    *)
+        die "unknown option/argument: '$1'"
+        ;;
+    esac
+    shift
+done
+
+[ -n "$mpiPACKAGE" ] || die "The mpich-VERSION was not specified"
+
+# Nothing to build
+if _foamIsNone "$mpiPACKAGE"
+then
+    echo "Using mpich-none (skip ThirdParty build of mpich)"
+    exit 0
+elif _foamIsSystem "$mpiPACKAGE"
+then
+    echo "Using mpich-system (skip ThirdParty build of mpich)"
+    exit 0
+fi
+
+#------------------------------------------------------------------------------
+#
+# Build mpich
+#
+#   MPI_SOURCE_DIR : location of the original sources
+#   MPI_ARCH_PATH  : installation directory
+
+MPI_SOURCE_DIR=$sourceBASE/$mpiPACKAGE
+MPI_ARCH_PATH=$installBASE/$mpiPACKAGE
+
+if [ -r "$MPI_ARCH_PATH/lib_ARCH/libmpi.so" ]
+then
+    echo "Already has shared library"
+elif [ -r "$MPI_ARCH_PATH/lib/libmpi.a" ]
+then
+    echo "Already has static library"
+else
+    echo "Starting build: $WM_MPLIB ($mpiPACKAGE)"
+    echo
+
+    (
+        # Configuration options:
+        unset configOpt
+
+        # Additional configure options
+        if [ "$1" = "--" ]
+        then
+            shift
+            configOpt="$configOpt $@"
+        fi
+
+        # End of configuration options
+        # ----------------------------
+
+        cd $MPI_SOURCE_DIR || exit 1
+        export GIT_DIR=$PWD/.git # Mask seeing our own git-repo
+        [ -e Makefile ] && make distclean 2>/dev/null
+
+        rm -rf $MPI_ARCH_PATH
+        rm -rf $buildDIR
+        mkdir -p $buildDIR
+        cd $buildDIR
+
+        set -x
+        $MPI_SOURCE_DIR/configure \
+            --prefix=$MPI_ARCH_PATH \
+            --disable-fortran --disable-g \
+            --libdir=$MPI_ARCH_PATH/lib$WM_COMPILER_LIB_ARCH \
+            --enable-shared --disable-static \
+            $configOpt \
+        && set +x \
+        && make -j $WM_NCOMPPROCS \
+        && make install \
+        && echo "Built: $mpiPACKAGE" \
+        && pkgconfigAdjust $MPI_ARCH_PATH
+    ) || {
+        echo "Error building: $mpiPACKAGE"
+        exit 1
+    }
+fi
+
+#------------------------------------------------------------------------------

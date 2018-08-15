@@ -1,0 +1,193 @@
+#!/bin/sh
+#------------------------------------------------------------------------------
+# =========                 |
+# \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+#  \\    /   O peration     |
+#   \\  /    A nd           | Copyright (C) 2017 OpenCFD Ltd.
+#    \\/     M anipulation  |
+#------------------------------------------------------------------------------
+# License
+#     This file is part of OpenFOAM, licensed under GNU General Public License
+#     <http://www.gnu.org/licenses/>.
+#
+# Script
+#     makeKAHIP
+#
+# Description
+#     Build the KaHIP library (int32 only).
+#
+# ----------------------------------------------
+# NO USER-CONFIGURABLE SETTINGS WITHIN THIS FILE
+#------------------------------------------------------------------------------
+# Short-circuit test for an installation
+if [ "$1" = "-test" ]
+then
+    [ "$#" -eq 2 ] || { echo "${0##*/} -test : needs 1 argument"; exit 1; }
+    dir="$2" # <- KAHIP_ARCH_PATH
+    if [ -d "$dir/include" ]
+    then
+        for lib in \
+            $FOAM_EXT_LIBBIN/libkahip.so \
+            $dir/lib/libkahip.a \
+            $dir/lib/libkahip.so \
+            $dir/lib$WM_COMPILER_LIB_ARCH/libkahip.a \
+            $dir/lib$WM_COMPILER_LIB_ARCH/libkahip.so \
+            ;
+        do
+            if [ -r "$lib" ]
+            then
+                echo "    kahip include: $dir/include"
+                echo "    kahip library: ${lib%/*}"
+                exit 0
+            fi
+        done
+    fi
+    exit 2
+fi
+#------------------------------------------------------------------------------
+# Run from third-party directory only
+cd ${0%/*} && wmakeCheckPwd "$WM_THIRD_PARTY_DIR" 2>/dev/null || {
+    echo "Error (${0##*/}) : not located in \$WM_THIRD_PARTY_DIR"
+    echo "    Check your OpenFOAM environment and installation"
+    exit 1
+}
+[ -n "$FOAM_EXT_LIBBIN" ] || {
+    echo "Error (${0##*/}) : \$FOAM_EXT_LIBBIN not set"
+    echo "    Check your OpenFOAM environment and installation"
+    exit 1
+}
+. etc/tools/ThirdPartyFunctions
+#------------------------------------------------------------------------------
+_foamEtc config.sh/kahip
+
+kahipPACKAGE=${KAHIP_VERSION:-kahip-system}
+targetType=libso
+
+#------------------------------------------------------------------------------
+usage()
+{
+    exec 1>&2
+    while [ "$#" -ge 1 ]; do echo "$1"; shift; done
+    /bin/cat<<USAGE
+
+Usage: ${0##*/} [OPTION] [lib|libso] [kahip-VERSION]
+options:
+  -gcc              Force gcc/g++ instead of the values from \$WM_CC, \$WM_CXX
+  -help
+
+* Compile KaHIP
+      $kahipPACKAGE
+
+USAGE
+    exit 1
+}
+#------------------------------------------------------------------------------
+
+# Parse options
+while [ "$#" -gt 0 ]
+do
+    case "$1" in
+    '') ;;      # Ignore empty
+    -h | -help) usage   ;;
+    -gcc)       useGcc  ;;
+
+    lib|libso)
+        targetType="$1"
+        ;;
+
+    kahip-[1-9]* | kahip-git)
+        kahipPACKAGE="${1%%/}"
+        unset KAHIP_ARCH_PATH  # Avoid inconsistency
+        ;;
+    *)
+        die "unknown option/argument: '$1'"
+        ;;
+    esac
+    shift
+done
+
+[ -n "$kahipPACKAGE" ] || die "The kahip-VERSION was not specified"
+
+# Nothing to build
+if _foamIsNone $kahipPACKAGE
+then
+    echo "Using kahip-none (skip ThirdParty build of KAHIP)"
+    exit 0
+elif _foamIsSystem $kahipPACKAGE
+then
+    echo "Using kahip-system"
+    exit 0
+fi
+
+#------------------------------------------------------------------------------
+#
+# Build KaHIP
+#
+#   KAHIP_ARCH_PATH  : installation directory
+#   KAHIP_SOURCE_DIR : location of the original sources
+
+KAHIP_SOURCE_DIR=$sourceBASE/$kahipPACKAGE
+KAHIP_ARCH_PATH=$installBASE/$kahipPACKAGE
+
+[ -d "$KAHIP_SOURCE_DIR" ] || {
+    echo "Missing sources: '$kahipPACKAGE'"
+    exit 1
+}
+
+#
+# Manual installation
+#
+install()
+{
+    # Ensure a clean build next time
+    wclean
+
+    local bindir=$KAHIP_ARCH_PATH/bin
+    local incdir=$KAHIP_ARCH_PATH/include
+    local libdir=$KAHIP_ARCH_PATH/lib$WM_COMPILER_LIB_ARCH
+
+    mkdir -m 0755 -p $incdir
+
+    /bin/cp -pv \
+        $KAHIP_SOURCE_DIR/interface/kaHIP_interface.h \
+        $incdir
+}
+
+echo "Starting build: $kahipPACKAGE ($targetType)"
+echo
+(
+    cd $KAHIP_SOURCE_DIR/lib || exit 1
+    export GIT_DIR=$KAHIP_SOURCE_DIR/.git # Mask seeing our own git-repo
+
+    rm -rf $KAHIP_ARCH_PATH
+    rm -f $FOAM_EXT_LIBBIN/libkahip.so
+
+    libdir=$KAHIP_ARCH_PATH/lib$WM_COMPILER_LIB_ARCH
+
+    cpMakeFiles kahip 2>/dev/null
+
+    if [ -e ../interface -a ! -e interface ]
+    then
+        ln -s ../interface interface
+    fi
+
+    # Place static libraries in sub-directory:
+    if [ "$targetType" = lib ]
+    then
+        mkdir -m 0755 -p $libdir 2>/dev/null
+        export FOAM_EXT_LIBBIN=$libdir
+    fi
+
+    # Location of lib sources for wmake
+    export KAHIP_LIB_SRC=$PWD
+
+    wmake -j $WM_NCOMPPROCS -s $targetType \
+    && echo "Built: kahip" \
+    && install
+) || {
+    echo "Error building: kahip"
+    exit 1
+}
+
+
+#------------------------------------------------------------------------------

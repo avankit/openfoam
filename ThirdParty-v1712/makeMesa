@@ -1,0 +1,218 @@
+#!/bin/sh
+#------------------------------------------------------------------------------
+# =========                 |
+# \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+#  \\    /   O peration     |
+#   \\  /    A nd           | Copyright (C) 2016-2017 OpenCFD Ltd.
+#    \\/     M anipulation  |
+#------------------------------------------------------------------------------
+# License
+#     This file is part of OpenFOAM, licensed under GNU General Public License
+#     <http://www.gnu.org/licenses/>.
+#
+# Script
+#     makeMesa
+#
+# Description
+#     Build script for Mesa
+#
+# Note
+#     Building with mesa-12.x.x fails to create an include/GL directory and
+#     an "osmesa.h" file. Both make it fairly useless for off-screen VTK.
+#
+#     Building with mesa-11.x, mesa-13.x and mesa-17.x seems to be okay.
+#
+# ----------------------------------------------
+# NO USER-CONFIGURABLE SETTINGS WITHIN THIS FILE
+#------------------------------------------------------------------------------
+# Run from third-party directory only
+cd ${0%/*} && wmakeCheckPwd "$WM_THIRD_PARTY_DIR" 2>/dev/null || {
+    echo "Error (${0##*/}) : not located in \$WM_THIRD_PARTY_DIR"
+    echo "    Check your OpenFOAM environment and installation"
+    exit 1
+}
+. etc/tools/ThirdPartyFunctions
+#------------------------------------------------------------------------------
+
+unset vtk_version mesa_version                           # Purge current values
+
+# mesa version from OpenFOAM etc/config.sh file:
+_foamEtc config.sh/vtk
+
+mesaPACKAGE=$mesa_version
+
+#------------------------------------------------------------------------------
+usage() {
+    exec 1>&2
+    while [ "$#" -ge 1 ]; do echo "$1"; shift; done
+    cat<<USAGE
+
+usage: ${0##*/} [OPTION] mesa-VERSION [-- configure-options]
+options:
+  -gcc              Force gcc/g++ instead of the values from \$WM_CC, \$WM_CXX
+  -help
+
+* build Mesa with
+      ${mesaPACKAGE:-'unspecified MESA version'}
+
+USAGE
+    exit 1
+}
+#------------------------------------------------------------------------------
+# Compiler settings for CMake/configure
+[ -n "$WM_CC" ]  && export CC="$WM_CC"
+[ -n "$WM_CXX" ] && export CXX="$WM_CXX"
+
+# Non-standard location for clang?
+case "$WM_COMPILER_TYPE-$WM_COMPILER" in
+ThirdParty-Clang*)
+    thirdPartyClang=true
+    ;;
+*)
+    unset thirdPartyClang
+    ;;
+esac
+
+# Parse options
+while [ "$#" -gt 0 ]
+do
+    case "$1" in
+    '') ;;      # Ignore empty
+    --) break;; # Extra configure options (leave on $@ for later detection)
+    -h | -help) usage   ;;
+    -gcc)
+        useGcc
+        unset thirdPartyClang
+        ;;
+    mesa-*)
+        mesaPACKAGE="${1%%/}"
+        ;;
+
+    *)
+        die "unknown option/argument: '$1'"
+        ;;
+    esac
+    shift
+done
+
+[ -n "$mesaPACKAGE" ] || die "The mesa-VERSION was not specified"
+
+# Nothing to build
+if _foamIsNone "$mesaPACKAGE"
+then
+    echo "Using mesa-none (skip ThirdParty build of MESA)"
+    exit 0
+elif _foamIsSystem "$mesaPACKAGE"
+then
+    echo "Using mesa-system (skip ThirdParty build of MESA)"
+    exit 0
+fi
+
+#------------------------------------------------------------------------------
+# Locate third-party clang as required
+if [ "$thirdPartyClang" = true ]
+then
+    thirdPartyClang=$(command -v clang) || {
+        echo "Error: could not properly locate clang"
+        exit 2
+    }
+
+    # Root installation directory
+    thirdPartyClang=${thirdPartyClang%/bin/clang}
+
+    [ -d "$thirdPartyClang" ] || {
+        echo "Error: could not properly locate clang"
+        exit 2
+    }
+fi
+
+#------------------------------------------------------------------------------
+#
+# Build MESA
+# For 64-bit
+# - MESA itself will normally build into 'lib64'.
+#
+#   MESA_SOURCE_DIR : location of the original sources
+#   MESA_ARCH_DIR   : installation directory
+
+MESA_SOURCE_DIR=$sourceBASE/$mesaPACKAGE
+MESA_ARCH_PATH=$installBASE/$mesaPACKAGE
+
+#
+# Manual adjustments to mesa
+# - avoid GLES (GLES1) since <GLES/gl.h> may mask the <GL/gl.h> header
+adjustMESA()
+{
+    pkgconfigAdjust $MESA_ARCH_PATH
+
+    \rm -rf $MESA_ARCH_PATH/include/GLES $MESA_ARCH_PATH/include/GLES1
+    echo "removed all gles1 includes"
+}
+
+(
+    # Configuration options:
+    unset configOpt
+
+    if [ -d "$thirdPartyClang" ]
+    then
+        configOpt="$configOpt --with-llvm-prefix=$thirdPartyClang"
+    fi
+
+    # Additional configure options
+    if [ "$1" = "--" ]
+    then
+        shift
+        configOpt="$configOpt $@"
+    fi
+
+    # End of configuration options
+    # ----------------------------
+    buildDIR=$buildBASE/$mesaPACKAGE
+
+    cd $MESA_SOURCE_DIR || exit 1
+    export GIT_DIR=$PWD/.git # Mask seeing our own git-repo
+
+    # Remove any existing build
+    rm -rf $MESA_ARCH_PATH
+    rm -rf $buildDIR
+    mkdir -p $buildDIR
+    cd $buildDIR
+
+    echo "----"
+    echo "Building $mesaPACKAGE"
+    echo "    Source         : $MESA_SOURCE_DIR"
+    echo "    Target         : $MESA_ARCH_PATH"
+    if [ -d "$thirdPartyClang" ]
+    then
+        echo "    Clang          : $thirdPartyClang"
+    fi
+    echo "----"
+
+    # Possibly for older mesa versions (see paraview wiki)
+    # CXXFLAGS="-O2 -DDEFAULT_SOFTWARE_DEPTH_BITS=31" \
+    # CFLAGS="-O2 -DDEFAULT_SOFTWARE_DEPTH_BITS=31" \
+
+    ## autoreconf -fi
+    set -x
+    $MESA_SOURCE_DIR/configure \
+        --prefix=$MESA_ARCH_PATH \
+        --disable-xvmc \
+        --disable-glx \
+        --disable-dri \
+        --disable-gbm \
+        --disable-egl \
+        --disable-gles1 \
+        --enable-texture-float \
+        --enable-gallium-osmesa --with-gallium-drivers=swrast \
+        $configOpt \
+    && set +x \
+    && make -j $WM_NCOMPPROCS \
+    && make install \
+    && echo "Built $mesaPACKAGE" \
+    && adjustMESA
+) || {
+    echo "Error building: MESA"
+    exit 1
+}
+
+# -----------------------------------------------------------------------------
