@@ -389,7 +389,7 @@ public:
     ClassNameTLS("dictionary");
 
     //- An empty dictionary, which is also the parent for all dictionaries
-    static const dictionary null;
+    static thread_local const dictionary null;
 
 
     // Constructors

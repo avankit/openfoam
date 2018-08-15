@@ -107,10 +107,21 @@ public:
 #define defineDebugSwitchWithName(Type, Name, DebugSwitch)                     \
     int Type::debug(::Foam::debug::debugSwitch(Name, DebugSwitch))
 
+//  TLS version
+#define defineDebugSwitchWithNameTLS(Type, Name, DebugSwitch)                     \
+    thread_local int Type::debug(::Foam::debug::debugSwitch(Name, DebugSwitch))
+
+
 //- Define the debug information
 #define defineDebugSwitch(Type, DebugSwitch)                                   \
     defineDebugSwitchWithName(Type, Type::typeName_(), DebugSwitch);           \
     registerDebugSwitchWithName(Type, Type, Type::typeName_())
+
+//  TLS version
+#define defineDebugSwitchTLS(Type, DebugSwitch)                                   \
+    defineDebugSwitchWithNameTLS(Type, Type::typeName_(), DebugSwitch);           \
+    registerDebugSwitchWithName(Type, Type, Type::typeName_())
+
 
 //- Define the debug information for templates, lookup as \a Name
 #define defineTemplateDebugSwitchWithName(Type, Name, DebugSwitch)             \

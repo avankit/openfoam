@@ -170,7 +170,7 @@ void Pstream::scatter
 	    // printf("Inside the 'Receive from up' section inside SCATTER | on myProcNo: %d |  rank: %d\n",UPstream::myProcNo(comm),rank_temp);
             if (contiguous<T>())
             {
-		printf("Before call to UIPstream::read | on rank(?): %d\n",UPstream::myProcNo(comm));
+		// printf("Before call to UIPstream::read | on rank(?): %d\n",UPstream::myProcNo(comm));
                 UIPstream::read
                 (
                     UPstream::commsTypes::scheduled,

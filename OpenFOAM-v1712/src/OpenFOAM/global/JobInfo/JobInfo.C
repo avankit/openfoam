@@ -35,6 +35,7 @@ License
 thread_local bool Foam::JobInfo::writeJobInfo(Foam::debug::infoSwitch("writeJobInfo", 0));
 thread_local Foam::JobInfo Foam::jobInfo;
 
+
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 bool Foam::JobInfo::write(Ostream& os) const

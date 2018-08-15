@@ -6,7 +6,7 @@ c++WARN     = -Wall -Wextra -Wold-style-cast -Wnon-virtual-dtor -Wno-unused-para
 # Suppress some warnings for flex++ and CGAL
 c++LESSWARN = -Wno-old-style-cast -Wno-unused-local-typedefs -Wno-array-bounds
 
-CC          = ampicxx -std=c++11 -m64
+CC          = ampicxx -std=c++11 -m64 -tlsglobals
 
 include $(DEFAULT_RULES)/c++$(WM_COMPILE_OPTION)
 
@@ -19,7 +19,7 @@ cxxtoo      = $(Ctoo)
 cctoo       = $(Ctoo)
 cpptoo      = $(Ctoo)
 
-LINK_LIBS   = $(c++DBUG)
+LINK_LIBS   = $(c++DBUG) -tlsglobals
 
 LINKLIBSO   = $(CC) $(c++FLAGS) -shared -Xlinker --add-needed -Xlinker --no-as-needed
 LINKEXE     = $(CC) $(c++FLAGS) -Xlinker --add-needed -Xlinker --no-as-needed

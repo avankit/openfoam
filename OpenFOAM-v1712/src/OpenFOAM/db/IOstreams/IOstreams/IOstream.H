@@ -215,7 +215,7 @@ private:
     // Private data
 
         //- Name for any generic stream - normally treat as readonly
-        static fileName staticName_;
+        static thread_local fileName staticName_;
 
         streamFormat format_;
         versionNumber version_;

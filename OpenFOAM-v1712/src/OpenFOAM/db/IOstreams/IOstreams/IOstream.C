@@ -30,7 +30,7 @@ License
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-Foam::fileName Foam::IOstream::staticName_("IOstream");
+thread_local Foam::fileName Foam::IOstream::staticName_("IOstream");
 
 
 // * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * * //

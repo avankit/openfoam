@@ -37,7 +37,7 @@ Description
 
 bool Foam::Time::exists(IOobject& io)
 {
-    printf("In \"findInstance.C\", function:exists, checking for file: %s\n",io.name().c_str());
+    // printf("In \"findInstance.C\", function:exists, checking for file: %s\n",io.name().c_str());
     // Generate filename for object
     fileName objPath(fileHandler().objectPath(io, word::null));
 
@@ -45,12 +45,12 @@ bool Foam::Time::exists(IOobject& io)
     bool ok;
     if (io.name().empty())
     {
-	printf("In \"findInstance.C\", function:exists. In if for empty name\n");
+	// printf("In \"findInstance.C\", function:exists. In if for empty name\n");
         ok = fileHandler().isDir(objPath);
     }
     else
     {
-	printf("In \"findInstance.C\", function:exists. In else for empty name\n");
+	// printf("In \"findInstance.C\", function:exists. In else for empty name\n");
         ok =
             fileHandler().isFile(objPath)
          && io.typeHeaderOk<IOList<label>>(false);// object with local scope
@@ -58,7 +58,7 @@ bool Foam::Time::exists(IOobject& io)
 
     if (!ok)
     {
-	printf("In \"findInstance.C\", function:exists. Second if, for the re-test\n");
+	// printf("In \"findInstance.C\", function:exists. Second if, for the re-test\n");
         // Re-test with raw objectPath. This is for backwards
         // compatibility
         fileName originalPath(io.objectPath());
@@ -105,7 +105,7 @@ Foam::word Foam::Time::findInstance
             *this
         );
 	
-	printf("In \"findInstance.C\", function:findInstance, created IOobject \"io\"\n");
+	// printf("In \"findInstance.C\", function:findInstance, created IOobject \"io\"\n");
         if (exists(io))
         {
             if (debug)
@@ -118,7 +118,7 @@ Foam::word Foam::Time::findInstance
 
             return timeName();
         }
-	printf("In \"findInstance.C\", function:findInstance, exists(io) was false\n");
+	// printf("In \"findInstance.C\", function:findInstance, exists(io) was false\n");
     }
 
     // Search back through the time directories to find the time
@@ -198,7 +198,7 @@ Foam::word Foam::Time::findInstance
         }
     }
 
-    printf("In \"findInstance.C\", function:findInstance, didn't find in any of the time directories, trying constant next\n");
+    // printf("In \"findInstance.C\", function:findInstance, didn't find in any of the time directories, trying constant next\n");
 
     // not in any of the time directories, try constant
 
@@ -227,7 +227,7 @@ Foam::word Foam::Time::findInstance
         return constant();
     }
 
-    printf("In \"findInstance.C\", function:findInstance, exists(io) failed in constant directory too.\n");
+    // printf("In \"findInstance.C\", function:findInstance, exists(io) failed in constant directory too.\n");
 
     if (rOpt == IOobject::MUST_READ || rOpt == IOobject::MUST_READ_IF_MODIFIED)
     {

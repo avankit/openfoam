@@ -181,7 +181,7 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("IOobject");
+    TypeNameTLS("IOobject");
 
 
     // Static data members

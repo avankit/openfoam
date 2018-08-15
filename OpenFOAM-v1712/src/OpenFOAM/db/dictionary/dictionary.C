@@ -36,7 +36,7 @@ namespace Foam
     defineTypeNameAndDebugTLS(dictionary, 0);
 }
 
-const Foam::dictionary Foam::dictionary::null;
+thread_local const Foam::dictionary Foam::dictionary::null;
 
 thread_local bool Foam::dictionary::writeOptionalEntries
 (

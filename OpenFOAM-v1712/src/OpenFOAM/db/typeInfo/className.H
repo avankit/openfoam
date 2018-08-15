@@ -79,7 +79,7 @@ public:                                                                        \
 //  TLS version
 #define ClassNameTLS(TypeNameString)                                              \
     ClassNameNoDebugTLS(TypeNameString);                                          \
-    static int debug
+    static thread_local int debug
 
 //- Add typeName information from argument \a TypeNameString to a namespace.
 //  Also declares debug information.
@@ -90,7 +90,7 @@ public:                                                                        \
 //  TLS version
 #define NamespaceNameTLS(TypeNameString)                                          \
     NamespaceNameNoDebugTLS(TypeNameString);                                      \
-    extern int debug
+    extern thread_local int debug
 
 //- Add typeName information from argument \a TypeNameString to a
 //  template class.  Also declares debug information.
@@ -151,7 +151,7 @@ public:                                                                        \
 //- TLS version 
 #define defineTypeNameAndDebugTLS(Type, DebugSwitch)                              \
     defineTypeNameTLS(Type);                                                      \
-    defineDebugSwitch(Type, DebugSwitch)
+    defineDebugSwitchTLS(Type, DebugSwitch)
 
 //- Define the typeName and debug information, lookup as \a Name
 #define defineTemplateTypeNameAndDebugWithName(Type, Name, DebugSwitch)        \
