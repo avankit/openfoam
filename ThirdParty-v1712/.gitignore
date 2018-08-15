@@ -24,9 +24,9 @@ platforms/
 /*[-_][0-9]*
 
 # Ignore all top-level sub-directories
-/*/
+# /*/
 
 # Do not ignore these ones though
-!/etc/
+# !/etc/
 
 # End-of-file
